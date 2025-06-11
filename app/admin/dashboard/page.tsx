@@ -23,11 +23,9 @@ export default function AdminDashboardPage() {
     )
   }
 
-  if (!user || user.role !== "admin") return null
+  if (!user || user.role !== "admin") {
+    return null
+  }
 
-  return (
-    <div className="container mx-auto px-4 py-8">
-      <AdminDashboard />
-    </div>
-  )
+  return <AdminDashboard />
 }
