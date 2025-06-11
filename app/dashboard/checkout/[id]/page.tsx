@@ -1,78 +1,84 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState, useEffect } from "react"
+import { useParams, useRouter } from "next/navigation"
 import { useAuth } from "@/lib/auth-context"
-import { useRouter, useParams } from "next/navigation"
 import { getProductById } from "@/lib/data"
 import { createOrder } from "@/lib/database"
-import type { Product } from "@/lib/types"
-import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
 import { AlertCircle, CheckCircle } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import type { Product } from "@/lib/types"
 
 export default function CheckoutPage() {
-  const { user, loading } = useAuth()
-  const router = useRouter()
-  const params = useParams()
   const [product, setProduct] = useState<Product | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
+  const [loading, setLoading] = useState(true)
   const [orderPlaced, setOrderPlaced] = useState(false)
   const [error, setError] = useState("")
+  const [isProcessing, setIsProcessing] = useState(false)
+  const params = useParams()
+  const router = useRouter()
+  const { user } = useAuth()
+  const productId = params.id as string
 
   useEffect(() => {
-    if (!loading && !user) {
+    if (!user) {
       router.push("/login")
+      return
     }
-  }, [user, loading, router])
 
-  useEffect(() => {
     const loadProduct = async () => {
       try {
-        if (params.id) {
-          const data = await getProductById(params.id as string)
-          setProduct(data)
+        const productData = await getProductById(productId)
+        if (!productData) {
+          setError("Product not found")
+        } else {
+          setProduct(productData)
         }
       } catch (error) {
         console.error("Failed to load product:", error)
-        setError("Product not found")
+        setError("Failed to load product details")
       } finally {
-        setIsLoading(false)
+        setLoading(false)
       }
     }
 
     loadProduct()
-  }, [params.id])
+  }, [productId, user, router])
 
   const handlePlaceOrder = async () => {
+    if (!user || !product) return
+
+    setIsProcessing(true)
+    setError("")
+
     try {
-      if (product && user) {
-        await createOrder({
-          product_id: product.id,
-          product_name: product.name,
-          user_id: user.id,
-          user_name: user.name,
-          price: product.price,
-        })
-        setOrderPlaced(true)
-      }
+      await createOrder({
+        product_id: product.id,
+        product_name: product.name,
+        user_id: user.id,
+        user_name: user.name,
+        price: product.price,
+      })
+      setOrderPlaced(true)
     } catch (error) {
       console.error("Failed to place order:", error)
       setError("Failed to place order. Please try again.")
+    } finally {
+      setIsProcessing(false)
     }
   }
 
-  if (loading || isLoading) {
+  if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[80vh]">
+      <div className="flex items-center justify-center min-h-[60vh]">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
       </div>
     )
   }
 
-  if (!user) return null
-
-  if (error) {
+  if (error && !product) {
     return (
       <div className="container mx-auto px-4 py-8">
         <Alert variant="destructive">
@@ -93,68 +99,89 @@ export default function CheckoutPage() {
         <Card>
           <CardHeader>
             <CardTitle className="text-2xl">Order Placed Successfully!</CardTitle>
-            <CardDescription>Your order has been placed and is awaiting payment confirmation.</CardDescription>
           </CardHeader>
           <CardContent>
-            <Alert className="bg-green-50">
+            <Alert className="mb-4 bg-green-50">
               <CheckCircle className="h-4 w-4 text-green-600" />
-              <AlertTitle>Payment Instructions</AlertTitle>
-              <AlertDescription className="mt-2">
-                <p>
-                  Please send payment to: <strong>0551999901</strong> via Mobile Money.
-                </p>
-                <p className="mt-2">Include your Agent ID ({user.id.substring(0, 8)}) in the payment description.</p>
-                <p className="mt-2">After payment, check your order status from time to time.</p>
-                <p className="mt-2 font-medium">Processing time: 1-40 minutes after payment confirmation.</p>
+              <AlertTitle className="text-green-600">Success</AlertTitle>
+              <AlertDescription>
+                Your order for {product?.name} has been placed successfully. Please make payment to complete your order.
               </AlertDescription>
             </Alert>
+
+            <div className="border rounded-lg p-4 mb-4">
+              <h3 className="font-medium mb-2">Payment Instructions</h3>
+              <ol className="list-decimal list-inside space-y-2 text-sm">
+                <li>
+                  Send GHS {product?.price.toFixed(2)} to <strong>0551999901</strong> via Mobile Money
+                </li>
+                <li>
+                  Use your Agent ID <strong>{user?.id}</strong> as the reference
+                </li>
+                <li>Your order will be processed once payment is confirmed</li>
+              </ol>
+            </div>
           </CardContent>
-          <CardFooter>
-            <Button onClick={() => router.push("/dashboard/orders")} className="w-full">
-              View My Orders
+          <CardFooter className="flex justify-between">
+            <Button variant="outline" onClick={() => router.push("/dashboard/products")}>
+              Order More
             </Button>
+            <Button onClick={() => router.push("/dashboard/orders")}>View My Orders</Button>
           </CardFooter>
         </Card>
       </div>
     )
   }
 
-  if (!product) return null
-
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-6">Checkout</h1>
-      <Card>
-        <CardHeader>
-          <CardTitle>{product.name}</CardTitle>
-          <CardDescription>{product.shortDescription}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="flex justify-between items-center border-b pb-2">
-              <span>Price:</span>
-              <span className="font-bold">GHS {product.price.toFixed(2)}</span>
+
+      {product && (
+        <Card>
+          <CardHeader>
+            <CardTitle>{product.name}</CardTitle>
+            <CardDescription>{product.shortDescription}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div>
+                <h3 className="font-medium">Price</h3>
+                <p className="text-2xl font-bold">GHS {product.price.toFixed(2)}</p>
+              </div>
+
+              <div>
+                <h3 className="font-medium">Description</h3>
+                <p className="text-sm text-muted-foreground">{product.description}</p>
+              </div>
+
+              {error && (
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              )}
+
+              <Alert>
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Payment Information</AlertTitle>
+                <AlertDescription>
+                  After placing your order, send payment to <strong>0551999901</strong> via Mobile Money. Use your Agent
+                  ID <strong>{user?.id}</strong> as reference.
+                </AlertDescription>
+              </Alert>
             </div>
-            <div className="border p-4 rounded-md bg-gray-50">
-              <h3 className="font-medium mb-2">Payment Instructions:</h3>
-              <p>{product.description}</p>
-            </div>
-            <Alert>
-              <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Important</AlertTitle>
-              <AlertDescription>
-                Your Agent ID is <strong>{user.id.substring(0, 8)}</strong>. Please include this in your payment
-                reference.
-              </AlertDescription>
-            </Alert>
-          </div>
-        </CardContent>
-        <CardFooter>
-          <Button onClick={handlePlaceOrder} className="w-full">
-            Place Order
-          </Button>
-        </CardFooter>
-      </Card>
+          </CardContent>
+          <CardFooter className="flex justify-between">
+            <Button variant="outline" onClick={() => router.push("/dashboard/products")}>
+              Back
+            </Button>
+            <Button onClick={handlePlaceOrder} disabled={isProcessing}>
+              {isProcessing ? "Processing..." : "Place Order"}
+            </Button>
+          </CardFooter>
+        </Card>
+      )}
     </div>
   )
 }

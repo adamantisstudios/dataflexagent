@@ -20,23 +20,31 @@ export default function RegisterPage() {
   const [confirmPassword, setConfirmPassword] = useState("")
   const [phone, setPhone] = useState("")
   const [error, setError] = useState("")
+  const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
   const { register } = useAuth()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError("")
+    setIsLoading(true)
 
     if (password !== confirmPassword) {
       setError("Passwords do not match")
+      setIsLoading(false)
       return
     }
 
     try {
+      console.log("Registering user:", { name, email, phone })
       await register(name, email, password, phone)
+      console.log("Registration successful")
       router.push("/dashboard")
-    } catch (err) {
-      setError("Registration failed. Please try again.")
+    } catch (err: any) {
+      console.error("Registration error:", err)
+      setError(err.message || "Registration failed. Please try again.")
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -103,8 +111,8 @@ export default function RegisterPage() {
                 placeholder="••••••••"
               />
             </div>
-            <Button type="submit" className="w-full">
-              Register
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading ? "Registering..." : "Register"}
             </Button>
           </form>
         </CardContent>
