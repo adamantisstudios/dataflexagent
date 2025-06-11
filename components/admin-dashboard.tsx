@@ -4,12 +4,13 @@ import { useEffect, useState } from "react"
 import { getAdminStats, getAllOrders } from "@/lib/data"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import type { Order } from "@/lib/types"
-import { Package, ShoppingCart, Clock, Users, ArrowRight } from "lucide-react"
+import { Package, ShoppingCart, Clock, Users, ArrowRight, AlertCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { updateOrderStatus } from "@/lib/data"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 
 export default function AdminDashboard() {
   const [orders, setOrders] = useState<Order[]>([])
@@ -20,29 +21,38 @@ export default function AdminDashboard() {
     totalAgents: 0,
   })
   const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    const loadData = async () => {
-      try {
-        const allOrders = await getAllOrders()
-        const adminStats = await getAdminStats()
-
-        // Get only the most recent 5 orders
-        const recentOrders = allOrders
-          .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-          .slice(0, 5)
-
-        setOrders(recentOrders)
-        setStats(adminStats)
-      } catch (error) {
-        console.error("Failed to load admin dashboard data:", error)
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
     loadData()
   }, [])
+
+  const loadData = async () => {
+    try {
+      setIsLoading(true)
+      setError(null)
+
+      console.log("Loading admin dashboard data...")
+
+      const [allOrders, adminStats] = await Promise.all([getAllOrders(), getAdminStats()])
+
+      console.log("Orders loaded:", allOrders.length)
+      console.log("Stats loaded:", adminStats)
+
+      // Get only the most recent 5 orders
+      const recentOrders = allOrders
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        .slice(0, 5)
+
+      setOrders(recentOrders)
+      setStats(adminStats)
+    } catch (error) {
+      console.error("Failed to load admin dashboard data:", error)
+      setError("Failed to load dashboard data. Please check your database connection.")
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   const handleStatusChange = async (orderId: string, newStatus: string) => {
     try {
@@ -72,9 +82,28 @@ export default function AdminDashboard() {
     )
   }
 
+  if (error) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <Alert className="mb-6">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+        <button
+          onClick={loadData}
+          className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
+        >
+          Retry
+        </button>
+      </div>
+    )
+  }
+
   return (
     <div>
       <h1 className="text-3xl font-bold mb-6">Admin Dashboard</h1>
+
+      {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -118,6 +147,7 @@ export default function AdminDashboard() {
         </Card>
       </div>
 
+      {/* Recent Orders */}
       <Card className="mb-8">
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
@@ -151,8 +181,8 @@ export default function AdminDashboard() {
                     <tr key={order.id} className="border-b">
                       <td className="py-3 px-2">{order.id.substring(0, 8)}</td>
                       <td className="py-3 px-2">{order.productName}</td>
-                      <td className="py-3 px-2">{order.userName}</td>
-                      <td className="py-3 px-2">{order.userId}</td>
+                      <td className="py-3 px-2">{order.userName || "Unknown"}</td>
+                      <td className="py-3 px-2">{order.userId.substring(0, 8)}</td>
                       <td className="py-3 px-2">{new Date(order.createdAt).toLocaleDateString()}</td>
                       <td className="py-3 px-2">GHS {order.price.toFixed(2)}</td>
                       <td className="py-3 px-2">
@@ -191,7 +221,7 @@ export default function AdminDashboard() {
                 ) : (
                   <tr>
                     <td colSpan={8} className="py-6 text-center text-muted-foreground">
-                      No orders found
+                      No orders found. Orders will appear here once agents start placing them.
                     </td>
                   </tr>
                 )}
@@ -201,6 +231,7 @@ export default function AdminDashboard() {
         </CardContent>
       </Card>
 
+      {/* Quick Links and System Info */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
@@ -215,6 +246,11 @@ export default function AdminDashboard() {
             <Link href="/admin/agents">
               <Button variant="outline" className="w-full justify-start">
                 <Users className="mr-2 h-4 w-4" /> Manage Agents
+              </Button>
+            </Link>
+            <Link href="/admin/analytics">
+              <Button variant="outline" className="w-full justify-start">
+                <ShoppingCart className="mr-2 h-4 w-4" /> View Analytics
               </Button>
             </Link>
           </CardContent>
@@ -235,7 +271,11 @@ export default function AdminDashboard() {
                 <span className="font-medium">1-30 minutes</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Last Login:</span>
+                <span className="text-muted-foreground">Database Status:</span>
+                <span className="font-medium text-green-600">Connected</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Last Updated:</span>
                 <span className="font-medium">{new Date().toLocaleString()}</span>
               </div>
             </div>

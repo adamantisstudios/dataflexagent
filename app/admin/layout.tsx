@@ -3,10 +3,9 @@
 import type React from "react"
 
 import { useAuth } from "@/lib/auth-context"
+import { AdminSidebar } from "@/components/admin-sidebar"
 import { useRouter, usePathname } from "next/navigation"
 import { useEffect } from "react"
-import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar"
-import AdminSidebar from "@/components/admin-sidebar"
 
 export default function AdminLayout({
   children,
@@ -17,24 +16,21 @@ export default function AdminLayout({
   const router = useRouter()
   const pathname = usePathname()
 
-  // Skip auth check for the admin login page
-  const isAdminLoginPage = pathname === "/admin" || pathname === "/admin/"
-
   useEffect(() => {
-    if (!loading && !isAdminLoginPage && (!user || user.role !== "admin")) {
+    if (!loading && (!user || user.role !== "admin")) {
       router.push("/admin")
     }
-  }, [user, loading, router, isAdminLoginPage])
+  }, [user, loading, router])
 
-  // For the login page, just render the children without the sidebar
-  if (isAdminLoginPage) {
-    return children
+  // If we're on the admin login page, just render the children
+  if (pathname === "/admin") {
+    return <>{children}</>
   }
 
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900"></div>
       </div>
     )
   }
@@ -44,9 +40,9 @@ export default function AdminLayout({
   }
 
   return (
-    <SidebarProvider>
+    <div className="flex h-screen bg-gray-100">
       <AdminSidebar />
-      <SidebarInset>{children}</SidebarInset>
-    </SidebarProvider>
+      <main className="flex-1 overflow-y-auto">{children}</main>
+    </div>
   )
 }

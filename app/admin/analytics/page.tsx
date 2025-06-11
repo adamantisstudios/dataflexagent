@@ -6,7 +6,8 @@ import { useRouter } from "next/navigation"
 import { getAnalytics } from "@/lib/database"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { CalendarDays, TrendingUp, Users, Package, DollarSign, Clock } from "lucide-react"
+import { CalendarDays, TrendingUp, Users, Package, DollarSign, Clock, AlertCircle } from "lucide-react"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 
 interface AnalyticsData {
   totalOrders: number
@@ -25,6 +26,7 @@ export default function AdminAnalyticsPage() {
   const router = useRouter()
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [timeRange, setTimeRange] = useState<"daily" | "weekly" | "monthly">("daily")
 
   useEffect(() => {
@@ -41,10 +43,17 @@ export default function AdminAnalyticsPage() {
 
   const loadAnalytics = async () => {
     try {
+      setIsLoading(true)
+      setError(null)
+      console.log("Loading analytics...")
+
       const data = await getAnalytics()
+      console.log("Analytics loaded:", data)
+
       setAnalytics(data)
     } catch (error) {
       console.error("Failed to load analytics:", error)
+      setError("Failed to load analytics data. Please check your database connection.")
     } finally {
       setIsLoading(false)
     }
@@ -58,7 +67,40 @@ export default function AdminAnalyticsPage() {
     )
   }
 
-  if (!user || user.role !== "admin" || !analytics) return null
+  if (!user || user.role !== "admin") return null
+
+  if (error) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <Alert className="mb-6">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+        <button
+          onClick={loadAnalytics}
+          className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
+        >
+          Retry
+        </button>
+      </div>
+    )
+  }
+
+  if (!analytics) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="text-center">
+          <p className="text-muted-foreground">No analytics data available</p>
+          <button
+            onClick={loadAnalytics}
+            className="mt-4 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
+          >
+            Load Analytics
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   const getCurrentData = () => {
     switch (timeRange) {
@@ -147,27 +189,31 @@ export default function AdminAnalyticsPage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {analytics.ordersByStatus.map((status) => (
-                <div key={status.status} className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Badge
-                      className={
-                        status.status === "completed"
-                          ? "bg-green-100 text-green-800"
-                          : status.status === "pending"
-                            ? "bg-yellow-100 text-yellow-800"
-                            : status.status === "processing"
-                              ? "bg-blue-100 text-blue-800"
-                              : "bg-red-100 text-red-800"
-                      }
-                    >
-                      {status.status.charAt(0).toUpperCase() + status.status.slice(1)}
-                    </Badge>
-                    <span className="text-sm">{status.count} orders</span>
+              {analytics.ordersByStatus.length > 0 ? (
+                analytics.ordersByStatus.map((status) => (
+                  <div key={status.status} className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Badge
+                        className={
+                          status.status === "completed"
+                            ? "bg-green-100 text-green-800"
+                            : status.status === "pending"
+                              ? "bg-yellow-100 text-yellow-800"
+                              : status.status === "processing"
+                                ? "bg-blue-100 text-blue-800"
+                                : "bg-red-100 text-red-800"
+                        }
+                      >
+                        {status.status.charAt(0).toUpperCase() + status.status.slice(1)}
+                      </Badge>
+                      <span className="text-sm">{status.count} orders</span>
+                    </div>
+                    <span className="text-sm font-medium">{status.percentage.toFixed(1)}%</span>
                   </div>
-                  <span className="text-sm font-medium">{status.percentage.toFixed(1)}%</span>
-                </div>
-              ))}
+                ))
+              ) : (
+                <p className="text-muted-foreground text-center py-4">No order data available</p>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -182,18 +228,22 @@ export default function AdminAnalyticsPage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {analytics.topAgents.slice(0, 5).map((agent, index) => (
-                <div key={agent.name} className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline">#{index + 1}</Badge>
-                    <span className="font-medium">{agent.name}</span>
+              {analytics.topAgents.length > 0 ? (
+                analytics.topAgents.slice(0, 5).map((agent, index) => (
+                  <div key={agent.name} className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline">#{index + 1}</Badge>
+                      <span className="font-medium">{agent.name}</span>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-sm font-medium">{agent.orders} orders</div>
+                      <div className="text-xs text-muted-foreground">GHS {agent.revenue.toFixed(2)}</div>
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <div className="text-sm font-medium">{agent.orders} orders</div>
-                    <div className="text-xs text-muted-foreground">GHS {agent.revenue.toFixed(2)}</div>
-                  </div>
-                </div>
-              ))}
+                ))
+              ) : (
+                <p className="text-muted-foreground text-center py-4">No agent data available</p>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -210,23 +260,27 @@ export default function AdminAnalyticsPage() {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {getCurrentData()
-              .slice(-7)
-              .map((item) => (
-                <div
-                  key={item.date || item.week || item.month}
-                  className="flex items-center justify-between p-3 border rounded-lg"
-                >
-                  <div>
-                    <div className="font-medium">{item.date || item.week || item.month}</div>
-                    <div className="text-sm text-muted-foreground">{item.count} orders</div>
+            {getCurrentData().length > 0 ? (
+              getCurrentData()
+                .slice(-7)
+                .map((item) => (
+                  <div
+                    key={item.date || item.week || item.month}
+                    className="flex items-center justify-between p-3 border rounded-lg"
+                  >
+                    <div>
+                      <div className="font-medium">{item.date || item.week || item.month}</div>
+                      <div className="text-sm text-muted-foreground">{item.count} orders</div>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-medium">GHS {item.revenue.toFixed(2)}</div>
+                      <div className="text-sm text-muted-foreground">Revenue</div>
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <div className="font-medium">GHS {item.revenue.toFixed(2)}</div>
-                    <div className="text-sm text-muted-foreground">Revenue</div>
-                  </div>
-                </div>
-              ))}
+                ))
+            ) : (
+              <p className="text-muted-foreground text-center py-4">No performance data available</p>
+            )}
           </div>
         </CardContent>
       </Card>

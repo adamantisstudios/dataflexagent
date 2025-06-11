@@ -9,12 +9,14 @@ import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { CheckCircle, Package, Loader2, Clock } from "lucide-react"
 import { Progress } from "@/components/ui/progress"
+import type { Order } from "@/lib/types"
 
 interface OrderListProps {
+  orders: Order[]
   isAdmin?: boolean
 }
 
-export default function OrderList({ isAdmin = false }: OrderListProps) {
+export default function OrderList({ orders: initialOrders, isAdmin = false }: OrderListProps) {
   const [orders, setOrders] = useState<DatabaseOrder[]>([])
   const [loading, setLoading] = useState(true)
   const { user } = useAuth()
