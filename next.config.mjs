@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'export',
+  // Removed output: 'export' for dynamic routes to work
   trailingSlash: true,
   eslint: {
     ignoreDuringBuilds: true,
