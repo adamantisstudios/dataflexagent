@@ -1,29 +1,25 @@
 import { createClient } from "@supabase/supabase-js"
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+// Create a single supabase client for interacting with your database
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://your-project.supabase.co"
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "your-anon-key"
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+export const supabase = createClient(supabaseUrl, supabaseKey)
 
-// Types for our database
-export interface DatabaseUser {
-  id: string
-  name: string
-  email: string
-  role: "admin" | "agent"
-  phone?: string
-  created_at: string
-}
+// Create a helper function to check if we're on the server
+export const isServer = () => typeof window === "undefined"
 
-export interface DatabaseOrder {
-  id: string
-  product_id: string
-  product_name: string
-  user_id: string
-  user_name: string
-  status: "pending" | "processing" | "completed" | "cancelled"
-  price: number
-  processing_note?: string
-  created_at: string
-  updated_at: string
+// Create a singleton pattern for client-side to prevent multiple instances
+let clientSideSupabase: ReturnType<typeof createClient> | null = null
+
+export const getSupabase = () => {
+  if (isServer()) {
+    return supabase
+  }
+
+  if (!clientSideSupabase) {
+    clientSideSupabase = createClient(supabaseUrl, supabaseKey)
+  }
+
+  return clientSideSupabase
 }

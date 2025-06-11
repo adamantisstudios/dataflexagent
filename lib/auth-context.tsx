@@ -65,6 +65,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
+  // Update the adminLogin function to properly handle admin login
   const adminLogin = async (email: string, password: string) => {
     try {
       // Admin login validation
@@ -76,12 +77,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       let dbUser = await getUserByEmail(email)
 
       if (!dbUser) {
-        dbUser = await createUser({
+        // For demo purposes, create an admin user if it doesn't exist
+        const adminUser = {
           name: "Admin User",
           email: "admin@dataflexghana.com",
-          role: "admin",
+          role: "admin" as const,
           phone: "0551999901",
-        })
+        }
+
+        dbUser = await createUser(adminUser)
       }
 
       const user: User = {
