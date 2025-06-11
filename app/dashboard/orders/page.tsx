@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { useAuth } from "@/lib/auth-context"
 import { useRouter } from "next/navigation"
-import { getOrders } from "@/lib/data"
+import { getOrdersByUserId } from "@/lib/database"
 import OrderList from "@/components/order-list"
 import type { Order } from "@/lib/types"
 
@@ -22,8 +22,10 @@ export default function OrdersPage() {
   useEffect(() => {
     const loadOrders = async () => {
       try {
-        const data = await getOrders(user?.id)
-        setOrders(data)
+        if (user?.id) {
+          const data = await getOrdersByUserId(user.id)
+          setOrders(data)
+        }
       } catch (error) {
         console.error("Failed to load orders:", error)
       } finally {

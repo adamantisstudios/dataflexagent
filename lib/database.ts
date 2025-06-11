@@ -404,6 +404,38 @@ export async function updateUserProfile(userId: string, updates: { name?: string
   console.log("User profile updated successfully")
 }
 
+export async function updateUserPassword(userId: string, currentPassword: string, newPassword: string): Promise<void> {
+  console.log("Updating user password:", userId)
+
+  // First verify current password
+  const { data: user, error: fetchError } = await supabase.from("users").select("password").eq("id", userId).single()
+
+  if (fetchError) {
+    console.error("Database error fetching user:", fetchError)
+    throw new Error("Failed to verify current password")
+  }
+
+  if (user.password !== currentPassword) {
+    throw new Error("Current password is incorrect")
+  }
+
+  // Update password
+  const { error } = await supabase
+    .from("users")
+    .update({
+      password: newPassword,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", userId)
+
+  if (error) {
+    console.error("Database error updating password:", error)
+    throw new Error("Failed to update password")
+  }
+
+  console.log("User password updated successfully")
+}
+
 export async function deleteUser(userId: string): Promise<void> {
   console.log("Deleting user:", userId)
 
@@ -490,3 +522,49 @@ export async function getRecentOrders(userId: string, limit = 5): Promise<Order[
     return []
   }
 }
+
+export async function getAdminStats() {
+  try {
+    console.log("Getting admin stats")
+
+    const { data: orders, error: ordersError } = await supabase.from("orders").select("*")
+    if (ordersError) throw ordersError
+
+    const { data: agents, error: agentsError } = await supabase.from("users").select("*").eq("role", "agent")
+    if (agentsError) throw agentsError
+
+    const stats = {
+      totalOrders: orders?.length || 0,
+      pendingOrders: orders?.filter((order) => order.status === "pending").length || 0,
+      completedOrders: orders?.filter((order) => order.status === "completed").length || 0,
+      totalAgents: agents?.length || 0,
+    }
+
+    console.log("Admin stats:", stats)
+    return stats
+  } catch (error) {
+    console.error("Failed to get admin stats:", error)
+    return {
+      totalOrders: 0,
+      pendingOrders: 0,
+      completedOrders: 0,
+      totalAgents: 0,
+    }
+  }
+}
+
+export async function clearAllOrders(): Promise<void> {
+  console.log("Clearing all orders from database")
+
+  const { error } = await supabase.from("orders").delete().neq("id", "placeholder")
+
+  if (error) {
+    console.error("Database error clearing orders:", error)
+    throw new Error("Failed to clear orders")
+  }
+
+  console.log("All orders cleared successfully")
+}
+
+// Re-export functions from data.ts
+export * from "./data"

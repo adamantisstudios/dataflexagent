@@ -10,8 +10,7 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-  output: 'export',
-  distDir: 'out',
+  // Remove output: 'export' to allow dynamic routes
   trailingSlash: true,
 }
 
