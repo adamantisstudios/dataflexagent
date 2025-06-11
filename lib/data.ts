@@ -1,410 +1,64 @@
 import { supabase } from "./supabase"
 import type { Order, User, Product } from "./types"
 
-// Updated products data with real prices and bundles
-export const products: Product[] = [
-  // MTN Bundles - Valid for 3 months
-  {
-    id: "mtn-1gb",
-    name: "MTN 1GB",
-    shortDescription: "1GB data valid for 3 months",
-    description:
-      "MTN 1GB data bundle valid for 3 months. After checkout, pay to 0551999901 via Mobile Money. Use your agent ID during checkout.",
-    price: 6.0,
-    category: "MTN",
-  },
-  {
-    id: "mtn-2gb",
-    name: "MTN 2GB",
-    shortDescription: "2GB data valid for 3 months",
-    description:
-      "MTN 2GB data bundle valid for 3 months. After checkout, pay to 0551999901 via Mobile Money. Use your agent ID during checkout.",
-    price: 12.0,
-    category: "MTN",
-  },
-  {
-    id: "mtn-3gb",
-    name: "MTN 3GB",
-    shortDescription: "3GB data valid for 3 months",
-    description:
-      "MTN 3GB data bundle valid for 3 months. After checkout, pay to 0551999901 via Mobile Money. Use your agent ID during checkout.",
-    price: 16.0,
-    category: "MTN",
-  },
-  {
-    id: "mtn-4gb",
-    name: "MTN 4GB",
-    shortDescription: "4GB data valid for 3 months",
-    description:
-      "MTN 4GB data bundle valid for 3 months. After checkout, pay to 0551999901 via Mobile Money. Use your agent ID during checkout.",
-    price: 21.0,
-    category: "MTN",
-  },
-  {
-    id: "mtn-5gb",
-    name: "MTN 5GB",
-    shortDescription: "5GB data valid for 3 months",
-    description:
-      "MTN 5GB data bundle valid for 3 months. After checkout, pay to 0551999901 via Mobile Money. Use your agent ID during checkout.",
-    price: 27.0,
-    category: "MTN",
-  },
-  {
-    id: "mtn-6gb",
-    name: "MTN 6GB",
-    shortDescription: "6GB data valid for 3 months",
-    description:
-      "MTN 6GB data bundle valid for 3 months. After checkout, pay to 0551999901 via Mobile Money. Use your agent ID during checkout.",
-    price: 31.0,
-    category: "MTN",
-  },
-  {
-    id: "mtn-7gb",
-    name: "MTN 7GB",
-    shortDescription: "7GB data valid for 3 months",
-    description:
-      "MTN 7GB data bundle valid for 3 months. After checkout, pay to 0551999901 via Mobile Money. Use your agent ID during checkout.",
-    price: 36.0,
-    category: "MTN",
-  },
-  {
-    id: "mtn-8gb",
-    name: "MTN 8GB",
-    shortDescription: "8GB data valid for 3 months",
-    description:
-      "MTN 8GB data bundle valid for 3 months. After checkout, pay to 0551999901 via Mobile Money. Use your agent ID during checkout.",
-    price: 40.0,
-    category: "MTN",
-  },
-  {
-    id: "mtn-10gb",
-    name: "MTN 10GB",
-    shortDescription: "10GB data valid for 3 months",
-    description:
-      "MTN 10GB data bundle valid for 3 months. After checkout, pay to 0551999901 via Mobile Money. Use your agent ID during checkout.",
-    price: 46.0,
-    category: "MTN",
-  },
-  {
-    id: "mtn-15gb",
-    name: "MTN 15GB",
-    shortDescription: "15GB data valid for 3 months",
-    description:
-      "MTN 15GB data bundle valid for 3 months. After checkout, pay to 0551999901 via Mobile Money. Use your agent ID during checkout.",
-    price: 67.0,
-    category: "MTN",
-  },
-  {
-    id: "mtn-20gb",
-    name: "MTN 20GB",
-    shortDescription: "20GB data valid for 3 months",
-    description:
-      "MTN 20GB data bundle valid for 3 months. After checkout, pay to 0551999901 via Mobile Money. Use your agent ID during checkout.",
-    price: 84.0,
-    category: "MTN",
-  },
-  {
-    id: "mtn-25gb",
-    name: "MTN 25GB",
-    shortDescription: "25GB data valid for 3 months",
-    description:
-      "MTN 25GB data bundle valid for 3 months. After checkout, pay to 0551999901 via Mobile Money. Use your agent ID during checkout.",
-    price: 105.0,
-    category: "MTN",
-  },
-  {
-    id: "mtn-30gb",
-    name: "MTN 30GB",
-    shortDescription: "30GB data valid for 3 months",
-    description:
-      "MTN 30GB data bundle valid for 3 months. After checkout, pay to 0551999901 via Mobile Money. Use your agent ID during checkout.",
-    price: 126.0,
-    category: "MTN",
-  },
-  {
-    id: "mtn-40gb",
-    name: "MTN 40GB",
-    shortDescription: "40GB data valid for 3 months",
-    description:
-      "MTN 40GB data bundle valid for 3 months. After checkout, pay to 0551999901 via Mobile Money. Use your agent ID during checkout.",
-    price: 163.0,
-    category: "MTN",
-  },
-  {
-    id: "mtn-50gb",
-    name: "MTN 50GB",
-    shortDescription: "50GB data valid for 3 months",
-    description:
-      "MTN 50GB data bundle valid for 3 months. After checkout, pay to 0551999901 via Mobile Money. Use your agent ID during checkout.",
-    price: 201.0,
-    category: "MTN",
-  },
-  {
-    id: "mtn-100gb",
-    name: "MTN 100GB",
-    shortDescription: "100GB data valid for 3 months",
-    description:
-      "MTN 100GB data bundle valid for 3 months. After checkout, pay to 0551999901 via Mobile Money. Use your agent ID during checkout.",
-    price: 396.0,
-    category: "MTN",
-  },
-
-  // AirtelTigo Bundles - Valid for 3 months
-  {
-    id: "airteltigo-1gb",
-    name: "AirtelTigo 1GB",
-    shortDescription: "1GB data valid for 3 months",
-    description:
-      "AirtelTigo 1GB data bundle valid for 3 months. After checkout, pay to 0551999901 via Mobile Money. Use your agent ID during checkout.",
-    price: 6.0,
-    category: "AirtelTigo",
-  },
-  {
-    id: "airteltigo-2gb",
-    name: "AirtelTigo 2GB",
-    shortDescription: "2GB data valid for 3 months",
-    description:
-      "AirtelTigo 2GB data bundle valid for 3 months. After checkout, pay to 0551999901 via Mobile Money. Use your agent ID during checkout.",
-    price: 10.0,
-    category: "AirtelTigo",
-  },
-  {
-    id: "airteltigo-3gb",
-    name: "AirtelTigo 3GB",
-    shortDescription: "3GB data valid for 3 months",
-    description:
-      "AirtelTigo 3GB data bundle valid for 3 months. After checkout, pay to 0551999901 via Mobile Money. Use your agent ID during checkout.",
-    price: 16.0,
-    category: "AirtelTigo",
-  },
-  {
-    id: "airteltigo-4gb",
-    name: "AirtelTigo 4GB",
-    shortDescription: "4GB data valid for 3 months",
-    description:
-      "AirtelTigo 4GB data bundle valid for 3 months. After checkout, pay to 0551999901 via Mobile Money. Use your agent ID during checkout.",
-    price: 21.0,
-    category: "AirtelTigo",
-  },
-  {
-    id: "airteltigo-5gb",
-    name: "AirtelTigo 5GB",
-    shortDescription: "5GB data valid for 3 months",
-    description:
-      "AirtelTigo 5GB data bundle valid for 3 months. After checkout, pay to 0551999901 via Mobile Money. Use your agent ID during checkout.",
-    price: 25.0,
-    category: "AirtelTigo",
-  },
-  {
-    id: "airteltigo-6gb",
-    name: "AirtelTigo 6GB",
-    shortDescription: "6GB data valid for 3 months",
-    description:
-      "AirtelTigo 6GB data bundle valid for 3 months. After checkout, pay to 0551999901 via Mobile Money. Use your agent ID during checkout.",
-    price: 27.0,
-    category: "AirtelTigo",
-  },
-  {
-    id: "airteltigo-7gb",
-    name: "AirtelTigo 7GB",
-    shortDescription: "7GB data valid for 3 months",
-    description:
-      "AirtelTigo 7GB data bundle valid for 3 months. After checkout, pay to 0551999901 via Mobile Money. Use your agent ID during checkout.",
-    price: 31.0,
-    category: "AirtelTigo",
-  },
-  {
-    id: "airteltigo-8gb",
-    name: "AirtelTigo 8GB",
-    shortDescription: "8GB data valid for 3 months",
-    description:
-      "AirtelTigo 8GB data bundle valid for 3 months. After checkout, pay to 0551999901 via Mobile Money. Use your agent ID during checkout.",
-    price: 36.0,
-    category: "AirtelTigo",
-  },
-  {
-    id: "airteltigo-9gb",
-    name: "AirtelTigo 9GB",
-    shortDescription: "9GB data valid for 3 months",
-    description:
-      "AirtelTigo 9GB data bundle valid for 3 months. After checkout, pay to 0551999901 via Mobile Money. Use your agent ID during checkout.",
-    price: 40.0,
-    category: "AirtelTigo",
-  },
-  {
-    id: "airteltigo-10gb",
-    name: "AirtelTigo 10GB",
-    shortDescription: "10GB data valid for 3 months",
-    description:
-      "AirtelTigo 10GB data bundle valid for 3 months. After checkout, pay to 0551999901 via Mobile Money. Use your agent ID during checkout.",
-    price: 44.0,
-    category: "AirtelTigo",
-  },
-  {
-    id: "airteltigo-15gb",
-    name: "AirtelTigo 15GB",
-    shortDescription: "15GB data valid for 3 months",
-    description:
-      "AirtelTigo 15GB data bundle valid for 3 months. After checkout, pay to 0551999901 via Mobile Money. Use your agent ID during checkout.",
-    price: 57.0,
-    category: "AirtelTigo",
-  },
-  {
-    id: "airteltigo-20gb",
-    name: "AirtelTigo 20GB",
-    shortDescription: "20GB data valid for 3 months",
-    description:
-      "AirtelTigo 20GB data bundle valid for 3 months. After checkout, pay to 0551999901 via Mobile Money. Use your agent ID during checkout.",
-    price: 66.0,
-    category: "AirtelTigo",
-  },
-  {
-    id: "airteltigo-25gb",
-    name: "AirtelTigo 25GB",
-    shortDescription: "25GB data valid for 3 months",
-    description:
-      "AirtelTigo 25GB data bundle valid for 3 months. After checkout, pay to 0551999901 via Mobile Money. Use your agent ID during checkout.",
-    price: 81.0,
-    category: "AirtelTigo",
-  },
-  {
-    id: "airteltigo-30gb",
-    name: "AirtelTigo 30GB",
-    shortDescription: "30GB data valid for 3 months",
-    description:
-      "AirtelTigo 30GB data bundle valid for 3 months. After checkout, pay to 0551999901 via Mobile Money. Use your agent ID during checkout.",
-    price: 91.0,
-    category: "AirtelTigo",
-  },
-  {
-    id: "airteltigo-40gb",
-    name: "AirtelTigo 40GB",
-    shortDescription: "40GB data valid for 3 months",
-    description:
-      "AirtelTigo 40GB data bundle valid for 3 months. After checkout, pay to 0551999901 via Mobile Money. Use your agent ID during checkout.",
-    price: 106.0,
-    category: "AirtelTigo",
-  },
-  {
-    id: "airteltigo-50gb",
-    name: "AirtelTigo 50GB",
-    shortDescription: "50GB data valid for 3 months",
-    description:
-      "AirtelTigo 50GB data bundle valid for 3 months. After checkout, pay to 0551999901 via Mobile Money. Use your agent ID during checkout.",
-    price: 116.0,
-    category: "AirtelTigo",
-  },
-  {
-    id: "airteltigo-60gb",
-    name: "AirtelTigo 60GB",
-    shortDescription: "60GB data valid for 3 months",
-    description:
-      "AirtelTigo 60GB data bundle valid for 3 months. After checkout, pay to 0551999901 via Mobile Money. Use your agent ID during checkout.",
-    price: 126.0,
-    category: "AirtelTigo",
-  },
-  {
-    id: "airteltigo-80gb",
-    name: "AirtelTigo 80GB",
-    shortDescription: "80GB data valid for 3 months",
-    description:
-      "AirtelTigo 80GB data bundle valid for 3 months. After checkout, pay to 0551999901 via Mobile Money. Use your agent ID during checkout.",
-    price: 156.0,
-    category: "AirtelTigo",
-  },
-  {
-    id: "airteltigo-100gb",
-    name: "AirtelTigo 100GB",
-    shortDescription: "100GB data valid for 3 months",
-    description:
-      "AirtelTigo 100GB data bundle valid for 3 months. After checkout, pay to 0551999901 via Mobile Money. Use your agent ID during checkout.",
-    price: 217.0,
-    category: "AirtelTigo",
-  },
-
-  // Telecel Bundles - Valid for 3 months
-  {
-    id: "telecel-5gb",
-    name: "Telecel 5GB",
-    shortDescription: "5GB data valid for 3 months",
-    description:
-      "Telecel 5GB data bundle valid for 3 months. After checkout, pay to 0551999901 via Mobile Money. Use your agent ID during checkout.",
-    price: 28.0,
-    category: "Telecel",
-  },
-  {
-    id: "telecel-10gb",
-    name: "Telecel 10GB",
-    shortDescription: "10GB data valid for 3 months",
-    description:
-      "Telecel 10GB data bundle valid for 3 months. After checkout, pay to 0551999901 via Mobile Money. Use your agent ID during checkout.",
-    price: 47.0,
-    category: "Telecel",
-  },
-  {
-    id: "telecel-15gb",
-    name: "Telecel 15GB",
-    shortDescription: "15GB data valid for 3 months",
-    description:
-      "Telecel 15GB data bundle valid for 3 months. After checkout, pay to 0551999901 via Mobile Money. Use your agent ID during checkout.",
-    price: 68.0,
-    category: "Telecel",
-  },
-  {
-    id: "telecel-20gb",
-    name: "Telecel 20GB",
-    shortDescription: "20GB data valid for 3 months",
-    description:
-      "Telecel 20GB data bundle valid for 3 months. After checkout, pay to 0551999901 via Mobile Money. Use your agent ID during checkout.",
-    price: 89.0,
-    category: "Telecel",
-  },
-  {
-    id: "telecel-25gb",
-    name: "Telecel 25GB",
-    shortDescription: "25GB data valid for 3 months",
-    description:
-      "Telecel 25GB data bundle valid for 3 months. After checkout, pay to 0551999901 via Mobile Money. Use your agent ID during checkout.",
-    price: 109.0,
-    category: "Telecel",
-  },
-  {
-    id: "telecel-30gb",
-    name: "Telecel 30GB",
-    shortDescription: "30GB data valid for 3 months",
-    description:
-      "Telecel 30GB data bundle valid for 3 months. After checkout, pay to 0551999901 via Mobile Money. Use your agent ID during checkout.",
-    price: 127.0,
-    category: "Telecel",
-  },
-  {
-    id: "telecel-40gb",
-    name: "Telecel 40GB",
-    shortDescription: "40GB data valid for 3 months",
-    description:
-      "Telecel 40GB data bundle valid for 3 months. After checkout, pay to 0551999901 via Mobile Money. Use your agent ID during checkout.",
-    price: 169.0,
-    category: "Telecel",
-  },
-  {
-    id: "telecel-50gb",
-    name: "Telecel 50GB",
-    shortDescription: "50GB data valid for 3 months",
-    description:
-      "Telecel 50GB data bundle valid for 3 months. After checkout, pay to 0551999901 via Mobile Money. Use your agent ID during checkout.",
-    price: 207.0,
-    category: "Telecel",
-  },
-  {
-    id: "telecel-100gb",
-    name: "Telecel 100GB",
-    shortDescription: "100GB data valid for 3 months",
-    description:
-      "Telecel 100GB data bundle valid for 3 months. After checkout, pay to 0551999901 via Mobile Money. Use your agent ID during checkout.",
-    price: 414.0,
-    category: "Telecel",
-  },
+// MTN bundles
+export const mtnBundles = [
+  { id: "mtn-1gb", name: "1GB", price: 6.0, provider: "MTN", validity: "3 months" },
+  { id: "mtn-2gb", name: "2GB", price: 12.0, provider: "MTN", validity: "3 months" },
+  { id: "mtn-3gb", name: "3GB", price: 16.0, provider: "MTN", validity: "3 months" },
+  { id: "mtn-4gb", name: "4GB", price: 21.0, provider: "MTN", validity: "3 months" },
+  { id: "mtn-5gb", name: "5GB", price: 27.0, provider: "MTN", validity: "3 months" },
+  { id: "mtn-6gb", name: "6GB", price: 31.0, provider: "MTN", validity: "3 months" },
+  { id: "mtn-7gb", name: "7GB", price: 36.0, provider: "MTN", validity: "3 months" },
+  { id: "mtn-8gb", name: "8GB", price: 40.0, provider: "MTN", validity: "3 months" },
+  { id: "mtn-10gb", name: "10GB", price: 46.0, provider: "MTN", validity: "3 months" },
+  { id: "mtn-15gb", name: "15GB", price: 67.0, provider: "MTN", validity: "3 months" },
+  { id: "mtn-20gb", name: "20GB", price: 84.0, provider: "MTN", validity: "3 months" },
+  { id: "mtn-25gb", name: "25GB", price: 105.0, provider: "MTN", validity: "3 months" },
+  { id: "mtn-30gb", name: "30GB", price: 126.0, provider: "MTN", validity: "3 months" },
+  { id: "mtn-40gb", name: "40GB", price: 163.0, provider: "MTN", validity: "3 months" },
+  { id: "mtn-50gb", name: "50GB", price: 201.0, provider: "MTN", validity: "3 months" },
+  { id: "mtn-100gb", name: "100GB", price: 396.0, provider: "MTN", validity: "3 months" },
 ]
+
+// AirtelTigo bundles
+export const airtelTigoBundles = [
+  { id: "at-1gb", name: "1GB", price: 6.0, provider: "AirtelTigo", validity: "3 months" },
+  { id: "at-2gb", name: "2GB", price: 10.0, provider: "AirtelTigo", validity: "3 months" },
+  { id: "at-3gb", name: "3GB", price: 16.0, provider: "AirtelTigo", validity: "3 months" },
+  { id: "at-4gb", name: "4GB", price: 21.0, provider: "AirtelTigo", validity: "3 months" },
+  { id: "at-5gb", name: "5GB", price: 25.0, provider: "AirtelTigo", validity: "3 months" },
+  { id: "at-6gb", name: "6GB", price: 27.0, provider: "AirtelTigo", validity: "3 months" },
+  { id: "at-7gb", name: "7GB", price: 31.0, provider: "AirtelTigo", validity: "3 months" },
+  { id: "at-8gb", name: "8GB", price: 36.0, provider: "AirtelTigo", validity: "3 months" },
+  { id: "at-9gb", name: "9GB", price: 40.0, provider: "AirtelTigo", validity: "3 months" },
+  { id: "at-10gb", name: "10GB", price: 44.0, provider: "AirtelTigo", validity: "3 months" },
+  { id: "at-15gb", name: "15GB", price: 57.0, provider: "AirtelTigo", validity: "3 months" },
+  { id: "at-20gb", name: "20GB", price: 66.0, provider: "AirtelTigo", validity: "3 months" },
+  { id: "at-25gb", name: "25GB", price: 81.0, provider: "AirtelTigo", validity: "3 months" },
+  { id: "at-30gb", name: "30GB", price: 91.0, provider: "AirtelTigo", validity: "3 months" },
+  { id: "at-40gb", name: "40GB", price: 106.0, provider: "AirtelTigo", validity: "3 months" },
+  { id: "at-50gb", name: "50GB", price: 116.0, provider: "AirtelTigo", validity: "3 months" },
+  { id: "at-60gb", name: "60GB", price: 126.0, provider: "AirtelTigo", validity: "3 months" },
+  { id: "at-80gb", name: "80GB", price: 156.0, provider: "AirtelTigo", validity: "3 months" },
+  { id: "at-100gb", name: "100GB", price: 217.0, provider: "AirtelTigo", validity: "3 months" },
+]
+
+// Telecel bundles
+export const telecelBundles = [
+  { id: "telecel-5gb", name: "5GB", price: 28.0, provider: "Telecel", validity: "3 months" },
+  { id: "telecel-10gb", name: "10GB", price: 47.0, provider: "Telecel", validity: "3 months" },
+  { id: "telecel-15gb", name: "15GB", price: 68.0, provider: "Telecel", validity: "3 months" },
+  { id: "telecel-20gb", name: "20GB", price: 89.0, provider: "Telecel", validity: "3 months" },
+  { id: "telecel-25gb", name: "25GB", price: 109.0, provider: "Telecel", validity: "3 months" },
+  { id: "telecel-30gb", name: "30GB", price: 127.0, provider: "Telecel", validity: "3 months" },
+  { id: "telecel-40gb", name: "40GB", price: 169.0, provider: "Telecel", validity: "3 months" },
+  { id: "telecel-50gb", name: "50GB", price: 207.0, provider: "Telecel", validity: "3 months" },
+  { id: "telecel-100gb", name: "100GB", price: 414.0, provider: "Telecel", validity: "3 months" },
+]
+
+// Combine all bundles
+export const products = [...mtnBundles, ...airtelTigoBundles, ...telecelBundles]
 
 // Real database functions
 export async function createOrder(orderData: {

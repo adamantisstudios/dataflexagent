@@ -1,5 +1,6 @@
 import { supabase } from "./supabase"
 import type { Order, User } from "./types"
+import { products } from "./data"
 
 export async function createOrder(orderData: {
   product_id: string
@@ -142,7 +143,7 @@ export async function getAllUsers(): Promise<User[]> {
     name: user.name,
     email: user.email,
     role: user.role,
-    phone: user.phone,
+    phone: user.phone || "",
   }))
 }
 
@@ -179,7 +180,7 @@ export async function getAllAgents(): Promise<User[]> {
         name: agent.name,
         email: agent.email,
         role: agent.role,
-        phone: agent.phone,
+        phone: agent.phone || "",
         orderCount: count || 0,
       }
     }),
@@ -324,10 +325,10 @@ export async function createUser(userData: {
   email: string
   role: "admin" | "agent"
   phone?: string
-  password?: string
 }): Promise<User> {
   console.log("Creating user:", userData.name, userData.email, userData.role)
 
+  // IMPORTANT: Removed password field since it doesn't exist in your schema
   const { data, error } = await supabase
     .from("users")
     .insert([
@@ -335,8 +336,7 @@ export async function createUser(userData: {
         name: userData.name,
         email: userData.email,
         role: userData.role,
-        phone: userData.phone,
-        password: userData.password || "password", // Default password
+        phone: userData.phone || "",
         created_at: new Date().toISOString(),
       },
     ])
@@ -355,7 +355,7 @@ export async function createUser(userData: {
     name: data.name,
     email: data.email,
     role: data.role,
-    phone: data.phone,
+    phone: data.phone || "",
   }
 }
 
@@ -381,7 +381,7 @@ export async function getUserByEmail(email: string): Promise<User | null> {
     name: data.name,
     email: data.email,
     role: data.role,
-    phone: data.phone,
+    phone: data.phone || "",
   }
 }
 
@@ -404,37 +404,7 @@ export async function updateUserProfile(userId: string, updates: { name?: string
   console.log("User profile updated successfully")
 }
 
-export async function updateUserPassword(userId: string, currentPassword: string, newPassword: string): Promise<void> {
-  console.log("Updating user password:", userId)
-
-  // First verify current password
-  const { data: user, error: fetchError } = await supabase.from("users").select("password").eq("id", userId).single()
-
-  if (fetchError) {
-    console.error("Database error fetching user:", fetchError)
-    throw new Error("Failed to verify current password")
-  }
-
-  if (user.password !== currentPassword) {
-    throw new Error("Current password is incorrect")
-  }
-
-  // Update password
-  const { error } = await supabase
-    .from("users")
-    .update({
-      password: newPassword,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", userId)
-
-  if (error) {
-    console.error("Database error updating password:", error)
-    throw new Error("Failed to update password")
-  }
-
-  console.log("User password updated successfully")
-}
+// Removed updateUserPassword function since there's no password column
 
 export async function deleteUser(userId: string): Promise<void> {
   console.log("Deleting user:", userId)
@@ -566,5 +536,10 @@ export async function clearAllOrders(): Promise<void> {
   console.log("All orders cleared successfully")
 }
 
-// Re-export functions from data.ts
+// Function to get products
+export function getProducts() {
+  return products
+}
+
+// Export data from data.ts
 export * from "./data"

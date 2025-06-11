@@ -1,96 +1,100 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/lib/auth-context"
-import { getProducts } from "@/lib/data"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import type { Product } from "@/lib/types"
+import { mtnBundles, airtelTigoBundles, telecelBundles } from "@/lib/data"
 
 export default function ProductsPage() {
-  const [products, setProducts] = useState<Product[]>([])
-  const [loading, setLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState("all")
-  const router = useRouter()
   const { user } = useAuth()
+  const router = useRouter()
+  const [activeTab, setActiveTab] = useState("mtn")
 
-  useEffect(() => {
+  const handleBuyBundle = (product: any) => {
     if (!user) {
       router.push("/login")
       return
     }
-
-    const loadProducts = async () => {
-      try {
-        const allProducts = await getProducts()
-        setProducts(allProducts)
-      } catch (error) {
-        console.error("Failed to load products:", error)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    loadProducts()
-  }, [user, router])
-
-  const filteredProducts = activeTab === "all" ? products : products.filter((product) => product.category === activeTab)
-
-  const handleCheckout = (productId: string) => {
-    router.push(`/dashboard/checkout/${productId}`)
+    router.push(`/dashboard/checkout/${product.id}`)
   }
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-      </div>
-    )
-  }
-
-  const categories = ["all", ...new Set(products.map((product) => product.category))]
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto py-6">
       <h1 className="text-3xl font-bold mb-6">Data Bundles</h1>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-8">
-        <TabsList className="mb-4">
-          {categories.map((category) => (
-            <TabsTrigger key={category} value={category} className="capitalize">
-              {category}
-            </TabsTrigger>
-          ))}
+      <Tabs defaultValue="mtn" value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="grid w-full grid-cols-3 mb-8">
+          <TabsTrigger value="mtn">MTN</TabsTrigger>
+          <TabsTrigger value="airteltigo">AirtelTigo</TabsTrigger>
+          <TabsTrigger value="telecel">Telecel</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="mtn">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {mtnBundles.map((bundle) => (
+              <Card key={bundle.id}>
+                <CardHeader>
+                  <CardTitle className="text-2xl">{bundle.name}</CardTitle>
+                  <CardDescription>Valid for {bundle.validity}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-3xl font-bold">₵{bundle.price.toFixed(2)}</p>
+                </CardContent>
+                <CardFooter>
+                  <Button onClick={() => handleBuyBundle(bundle)} className="w-full">
+                    Buy Now
+                  </Button>
+                </CardFooter>
+              </Card>
+            ))}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="airteltigo">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {airtelTigoBundles.map((bundle) => (
+              <Card key={bundle.id}>
+                <CardHeader>
+                  <CardTitle className="text-2xl">{bundle.name}</CardTitle>
+                  <CardDescription>Valid for {bundle.validity}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-3xl font-bold">₵{bundle.price.toFixed(2)}</p>
+                </CardContent>
+                <CardFooter>
+                  <Button onClick={() => handleBuyBundle(bundle)} className="w-full">
+                    Buy Now
+                  </Button>
+                </CardFooter>
+              </Card>
+            ))}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="telecel">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {telecelBundles.map((bundle) => (
+              <Card key={bundle.id}>
+                <CardHeader>
+                  <CardTitle className="text-2xl">{bundle.name}</CardTitle>
+                  <CardDescription>Valid for {bundle.validity}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-3xl font-bold">₵{bundle.price.toFixed(2)}</p>
+                </CardContent>
+                <CardFooter>
+                  <Button onClick={() => handleBuyBundle(bundle)} className="w-full">
+                    Buy Now
+                  </Button>
+                </CardFooter>
+              </Card>
+            ))}
+          </div>
+        </TabsContent>
       </Tabs>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredProducts.map((product) => (
-          <Card key={product.id} className="overflow-hidden">
-            <CardHeader>
-              <CardTitle>{product.name}</CardTitle>
-              <CardDescription>{product.shortDescription}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold mb-2">GHS {product.price.toFixed(2)}</div>
-              <p className="text-sm text-muted-foreground">{product.description}</p>
-            </CardContent>
-            <CardFooter>
-              <Button onClick={() => handleCheckout(product.id)} className="w-full">
-                Buy Now
-              </Button>
-            </CardFooter>
-          </Card>
-        ))}
-      </div>
-
-      {filteredProducts.length === 0 && (
-        <div className="text-center py-12">
-          <p className="text-muted-foreground">No data bundles available in this category.</p>
-        </div>
-      )}
     </div>
   )
 }
