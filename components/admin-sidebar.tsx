@@ -1,0 +1,85 @@
+"use client"
+
+import { usePathname } from "next/navigation"
+import Link from "next/link"
+import { useAuth } from "@/lib/auth-context"
+import { LayoutDashboard, Package, Users, Settings, LogOut, BarChart } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuItem,
+  SidebarMenuButton,
+} from "@/components/ui/sidebar"
+
+export default function AdminSidebar() {
+  const pathname = usePathname()
+  const { logout } = useAuth()
+
+  const isActive = (path: string) => {
+    return pathname === path || pathname?.startsWith(`${path}/`)
+  }
+
+  return (
+    <Sidebar>
+      <SidebarHeader>
+        <div className="flex items-center justify-center py-4">
+          <h1 className="text-xl font-bold">DataFlex Admin</h1>
+        </div>
+      </SidebarHeader>
+      <SidebarContent>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild isActive={isActive("/admin/dashboard")}>
+              <Link href="/admin/dashboard">
+                <LayoutDashboard />
+                <span>Dashboard</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild isActive={isActive("/admin/orders")}>
+              <Link href="/admin/orders">
+                <Package />
+                <span>Orders</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild isActive={isActive("/admin/agents")}>
+              <Link href="/admin/agents">
+                <Users />
+                <span>Agents</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild isActive={isActive("/admin/analytics")}>
+              <Link href="/admin/dashboard">
+                <BarChart />
+                <span>Analytics</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild isActive={isActive("/admin/settings")}>
+              <Link href="/admin/dashboard">
+                <Settings />
+                <span>Settings</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarContent>
+      <SidebarFooter>
+        <Button variant="ghost" className="w-full justify-start" onClick={logout}>
+          <LogOut className="mr-2 h-4 w-4" />
+          <span>Logout</span>
+        </Button>
+      </SidebarFooter>
+    </Sidebar>
+  )
+}
