@@ -1,4 +1,17 @@
+"use client"
+
+import type React from "react"
+
+import { useRouter } from "next/navigation"
+
 export default function Footer() {
+  const router = useRouter()
+
+  const handleAdminClick = (e: React.MouseEvent) => {
+    e.preventDefault()
+    router.push("/admin")
+  }
+
   return (
     <footer className="bg-gray-100 py-8">
       <div className="container mx-auto px-4">
@@ -31,9 +44,9 @@ export default function Footer() {
                 </a>
               </li>
               <li>
-                <a href="/admin" className="text-gray-600 hover:text-primary">
+                <button onClick={handleAdminClick} className="text-gray-600 hover:text-primary text-left">
                   Admin
-                </a>
+                </button>
               </li>
             </ul>
           </div>

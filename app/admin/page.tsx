@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import { useAuth } from "@/lib/auth-context"
 import { useRouter } from "next/navigation"
@@ -10,7 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Shield, AlertCircle } from "lucide-react"
+import { Shield, AlertCircle, ArrowLeft } from "lucide-react"
 
 export default function AdminLoginPage() {
   const { adminLogin, user } = useAuth()
@@ -41,9 +40,25 @@ export default function AdminLoginPage() {
     }
   }
 
+  const handleBackToHome = () => {
+    router.push("/")
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
+        {/* Back to Home Button */}
+        <div className="text-left">
+          <Button
+            variant="ghost"
+            onClick={handleBackToHome}
+            className="flex items-center gap-2 text-gray-600 hover:text-gray-900"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to Home
+          </Button>
+        </div>
+
         <div className="text-center">
           <Shield className="mx-auto h-12 w-12 text-primary" />
           <h2 className="mt-6 text-3xl font-extrabold text-gray-900">Admin Access</h2>
@@ -96,9 +111,9 @@ export default function AdminLoginPage() {
             <div className="mt-6 text-center">
               <p className="text-sm text-gray-600">
                 Not an admin?{" "}
-                <a href="/" className="font-medium text-primary hover:text-primary/80">
+                <button onClick={handleBackToHome} className="font-medium text-primary hover:text-primary/80 underline">
                   Go to main site
-                </a>
+                </button>
               </p>
             </div>
           </CardContent>
