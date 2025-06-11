@@ -58,7 +58,7 @@ export default function AdminSidebar() {
           </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarMenuButton asChild isActive={isActive("/admin/analytics")}>
-              <Link href="/admin/dashboard">
+              <Link href="/admin/analytics">
                 <BarChart />
                 <span>Analytics</span>
               </Link>
@@ -66,7 +66,7 @@ export default function AdminSidebar() {
           </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarMenuButton asChild isActive={isActive("/admin/settings")}>
-              <Link href="/admin/dashboard">
+              <Link href="/admin/settings">
                 <Settings />
                 <span>Settings</span>
               </Link>

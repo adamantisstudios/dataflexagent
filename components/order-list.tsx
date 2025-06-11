@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useAuth } from "@/lib/auth-context"
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { CheckCircle, Package, Loader2 } from "lucide-react"
+import { CheckCircle, Package, Loader2, Clock } from "lucide-react"
 import { Progress } from "@/components/ui/progress"
 
 interface OrderListProps {
@@ -60,7 +60,9 @@ export default function OrderList({ isAdmin = false }: OrderListProps) {
     return (
       <Card>
         <CardContent className="py-10 text-center">
+          <Package className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
           <p className="text-gray-500">No orders found.</p>
+          <p className="text-sm text-muted-foreground mt-2">Your orders will appear here once you make a purchase.</p>
         </CardContent>
       </Card>
     )
@@ -102,12 +104,18 @@ export default function OrderList({ isAdmin = false }: OrderListProps) {
 
               {order.status === "pending" && !isAdmin && (
                 <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-md">
-                  <h4 className="font-medium mb-2">Payment Instructions:</h4>
+                  <h4 className="font-medium mb-2 flex items-center gap-2">
+                    <Clock className="h-4 w-4" />
+                    Payment Instructions:
+                  </h4>
                   <p>
                     Please send payment to: <strong>0551999901</strong> via Mobile Money.
                   </p>
                   <p className="mt-2">Include your Agent ID ({user?.id.substring(0, 8)}) in the payment description.</p>
-                  <p className="mt-2">After payment, send proof on WhatsApp to the same number.</p>
+                  <p className="mt-3 text-sm text-muted-foreground">
+                    After payment, please wait and check your order status here. For support or complaints, you can
+                    contact us via WhatsApp.
+                  </p>
                 </div>
               )}
 
@@ -126,7 +134,7 @@ export default function OrderList({ isAdmin = false }: OrderListProps) {
                       <span>Processing</span>
                       <span>Estimated time: 1-30 minutes</span>
                     </div>
-                    <Progress value={50} className="h-2" />
+                    <Progress value={75} className="h-2" />
                   </div>
                 </div>
               )}
