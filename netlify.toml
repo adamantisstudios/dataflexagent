@@ -3,10 +3,14 @@
   publish = "out"
 
 [build.environment]
-  NODE_VERSION = "18.20.0"
-  NPM_VERSION = "10.8.2"
+  NODE_VERSION = "18"
+  NPM_VERSION = "10"
 
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
+
+[context.production.environment]
+  NEXT_PUBLIC_SUPABASE_URL = ""
+  NEXT_PUBLIC_SUPABASE_ANON_KEY = ""
