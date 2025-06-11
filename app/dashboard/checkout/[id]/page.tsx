@@ -104,8 +104,8 @@ export default function CheckoutPage() {
                   Please send payment to: <strong>0551999901</strong> via Mobile Money.
                 </p>
                 <p className="mt-2">Include your Agent ID ({user.id.substring(0, 8)}) in the payment description.</p>
-                <p className="mt-2">After payment, send proof on WhatsApp to the same number.</p>
-                <p className="mt-2 font-medium">Processing time: 1-30 minutes after payment confirmation.</p>
+                <p className="mt-2">After payment, check your order status from time to time.</p>
+                <p className="mt-2 font-medium">Processing time: 1-40 minutes after payment confirmation.</p>
               </AlertDescription>
             </Alert>
           </CardContent>

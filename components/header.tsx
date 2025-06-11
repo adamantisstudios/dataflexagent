@@ -48,6 +48,9 @@ export default function Header() {
                     <Link href="/dashboard/orders" className="text-gray-600 hover:text-primary">
                       Orders
                     </Link>
+                    <Link href="/dashboard/settings" className="text-gray-600 hover:text-primary">
+                      Settings
+                    </Link>
                   </>
                 )}
                 <Button variant="ghost" onClick={logout}>
@@ -61,9 +64,6 @@ export default function Header() {
                 </Link>
                 <Link href="/register" passHref>
                   <Button>Register</Button>
-                </Link>
-                <Link href="/admin" className="text-gray-600 hover:text-primary">
-                  Admin
                 </Link>
               </>
             )}
@@ -130,6 +130,13 @@ export default function Header() {
                     >
                       Orders
                     </Link>
+                    <Link
+                      href="/dashboard/settings"
+                      className="block text-gray-600 hover:text-primary"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      Settings
+                    </Link>
                   </>
                 )}
                 <Button
@@ -154,13 +161,6 @@ export default function Header() {
                 </Link>
                 <Link href="/register" onClick={() => setMobileMenuOpen(false)} className="block">
                   <Button className="w-full">Register</Button>
-                </Link>
-                <Link
-                  href="/admin"
-                  className="block text-gray-600 hover:text-primary"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  Admin
                 </Link>
               </>
             )}

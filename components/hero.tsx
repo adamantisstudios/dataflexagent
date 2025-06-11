@@ -17,15 +17,17 @@ export default function Hero() {
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Link href="/register">
-            <Button size="lg" className="bg-primary hover:bg-primary/90 text-white px-8 py-3">
+            <Button
+              size="lg"
+              className="bg-green-600 hover:bg-green-700 text-white px-8 py-4 text-lg font-semibold shadow-lg transition-all duration-300 hover:shadow-xl"
+            >
               Become an Agent
             </Button>
           </Link>
           <Link href="/login">
             <Button
               size="lg"
-              variant="outline"
-              className="border-white text-white hover:bg-white hover:text-black px-8 py-3"
+              className="bg-green-600 hover:bg-green-700 text-white px-8 py-4 text-lg font-semibold shadow-lg transition-all duration-300 hover:shadow-xl"
             >
               Agent Login
             </Button>

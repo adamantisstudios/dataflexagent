@@ -50,26 +50,19 @@ export const getAllAgents = async (): Promise<DatabaseUser[]> => {
   return usersWithOrderCount || []
 }
 
-export const deleteUser = async (userId: string): Promise<void> => {
-  // First delete all orders for this user
-  const { error: ordersError } = await supabase.from("orders").delete().eq("user_id", userId)
+export async function updateUserProfile(userId: string, updates: { name?: string; phone?: string }) {
+  const { data, error } = await supabase.from("users").update(updates).eq("id", userId).select().single()
 
-  if (ordersError) throw ordersError
-
-  // Then delete the user
-  const { error: userError } = await supabase.from("users").delete().eq("id", userId)
-
-  if (userError) throw userError
+  if (error) throw error
+  return data
 }
 
-export const updateUserProfile = async (
-  userId: string,
-  updates: {
-    name?: string
-    phone?: string
-  },
-): Promise<void> => {
-  const { error } = await supabase.from("users").update(updates).eq("id", userId)
+export async function deleteUser(userId: string) {
+  // First delete all related orders
+  await supabase.from("orders").delete().eq("user_id", userId)
+
+  // Then delete the user
+  const { error } = await supabase.from("users").delete().eq("id", userId)
 
   if (error) throw error
 }

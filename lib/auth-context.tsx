@@ -38,9 +38,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       // For demo purposes, we'll use simple password check
-      // In production, you'd use proper password hashing
+      // Admin can use either default or custom password
       const isValidPassword =
-        (email === "admin@dataflexghana.com" && password === "admin123") || password === "password" // Demo password for agents
+        (email === "admin@dataflexghana.com" && (password === "admin123" || password === "password")) ||
+        (dbUser.role === "agent" && password === "password") // Demo password for agents
 
       if (!isValidPassword) {
         throw new Error("Invalid password")

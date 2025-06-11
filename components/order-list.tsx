@@ -113,8 +113,10 @@ export default function OrderList({ isAdmin = false }: OrderListProps) {
                   </p>
                   <p className="mt-2">Include your Agent ID ({user?.id.substring(0, 8)}) in the payment description.</p>
                   <p className="mt-3 text-sm text-muted-foreground">
-                    After payment, please wait and check your order status here. For support or complaints, you can
-                    contact us via WhatsApp.
+                    After payment, check your order status from time to time.
+                  </p>
+                  <p className="mt-1 text-sm font-medium text-muted-foreground">
+                    Processing time: 1-40 minutes after payment confirmation.
                   </p>
                 </div>
               )}
