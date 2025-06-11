@@ -1,7 +1,11 @@
 "use client"
 
+import { CardDescription } from "@/components/ui/card"
+
 import { useEffect, useState } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { useAuth } from "@/lib/auth-context"
+import { useRouter } from "next/navigation"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Users, ShoppingCart, TrendingUp } from "lucide-react"
 import { supabase } from "@/lib/supabase"
 
@@ -15,6 +19,9 @@ interface AnalyticsData {
 }
 
 export default function AnalyticsPage() {
+  const { user, loading } = useAuth()
+  const router = useRouter()
+  const [mounted, setMounted] = useState(false)
   const [analytics, setAnalytics] = useState<AnalyticsData>({
     totalOrders: 0,
     totalRevenue: 0,
@@ -25,6 +32,16 @@ export default function AnalyticsPage() {
   })
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  useEffect(() => {
+    if (mounted && !loading && (!user || user.role !== "admin")) {
+      router.push("/admin")
+    }
+  }, [user, loading, router, mounted])
 
   const loadAnalytics = async () => {
     try {
@@ -99,8 +116,22 @@ export default function AnalyticsPage() {
   }
 
   useEffect(() => {
-    loadAnalytics()
-  }, [])
+    if (mounted && user?.role === "admin") {
+      loadAnalytics()
+    }
+  }, [mounted, user])
+
+  if (!mounted || loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[80vh]">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    )
+  }
+
+  if (!user || user.role !== "admin") {
+    return null
+  }
 
   if (isLoading) {
     return (
