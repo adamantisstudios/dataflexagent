@@ -23,7 +23,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Check if user is logged in from localStorage (for session persistence)
     const storedUser = localStorage.getItem("user")
     if (storedUser) {
-      setUser(JSON.parse(storedUser))
+      try {
+        setUser(JSON.parse(storedUser))
+      } catch (error) {
+        console.error("Error parsing stored user:", error)
+        localStorage.removeItem("user")
+      }
     }
     setLoading(false)
   }, [])
@@ -38,10 +43,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       // For demo purposes, we'll use simple password check
-      // Admin can use either default or custom password
-      const isValidPassword =
-        (email === "admin@dataflexghana.com" && (password === "admin123" || password === "password")) ||
-        (dbUser.role === "agent" && password === "password") // Demo password for agents
+      const isValidPassword = password === "password" // Demo password for agents
 
       if (!isValidPassword) {
         throw new Error("Invalid password")
@@ -64,7 +66,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   const adminLogin = async (email: string, password: string) => {
-    if (email === "admin@dataflexghana.com" && password === "admin123") {
+    try {
+      // Admin login validation
+      if (email !== "admin@dataflexghana.com" || password !== "admin123") {
+        throw new Error("Invalid admin credentials")
+      }
+
       // Check if admin exists in database, create if not
       let dbUser = await getUserByEmail(email)
 
@@ -87,10 +94,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       setUser(user)
       localStorage.setItem("user", JSON.stringify(user))
-      return
+    } catch (error) {
+      console.error("Admin login error:", error)
+      throw new Error("Invalid admin credentials")
     }
-
-    throw new Error("Invalid admin credentials")
   }
 
   const register = async (name: string, email: string, password: string, phone: string) => {

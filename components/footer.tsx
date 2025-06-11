@@ -1,15 +1,8 @@
 "use client"
 
-import type React from "react"
-
-import { useRouter } from "next/navigation"
-
 export default function Footer() {
-  const router = useRouter()
-
-  const handleAdminClick = (e: React.MouseEvent) => {
-    e.preventDefault()
-    router.push("/admin")
+  const handleAdminClick = () => {
+    window.location.href = "/admin"
   }
 
   return (
@@ -29,23 +22,26 @@ export default function Footer() {
             <h3 className="text-lg font-bold mb-4">Quick Links</h3>
             <ul className="space-y-2">
               <li>
-                <a href="/" className="text-gray-600 hover:text-primary">
+                <a href="/" className="text-gray-600 hover:text-primary transition-colors">
                   Home
                 </a>
               </li>
               <li>
-                <a href="/login" className="text-gray-600 hover:text-primary">
-                  Login
+                <a href="/login" className="text-gray-600 hover:text-primary transition-colors">
+                  Agent Login
                 </a>
               </li>
               <li>
-                <a href="/register" className="text-gray-600 hover:text-primary">
+                <a href="/register" className="text-gray-600 hover:text-primary transition-colors">
                   Register
                 </a>
               </li>
               <li>
-                <button onClick={handleAdminClick} className="text-gray-600 hover:text-primary text-left">
-                  Admin
+                <button
+                  onClick={handleAdminClick}
+                  className="text-gray-600 hover:text-primary transition-colors text-left underline"
+                >
+                  Admin Login
                 </button>
               </li>
             </ul>
