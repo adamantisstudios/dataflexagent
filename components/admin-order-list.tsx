@@ -1,281 +1,188 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { getAllOrders, updateOrderStatus, subscribeToOrders } from "@/lib/database"
-import type { DatabaseOrder } from "@/lib/supabase"
+import { useEffect, useState } from "react"
+import { getAllOrders, updateOrderStatus } from "@/lib/data"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
+import { AlertCircle, Package } from "lucide-react"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { toast } from "@/hooks/use-toast"
-import { Search, Loader2 } from "lucide-react"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
-import { Textarea } from "@/components/ui/textarea"
+import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import type { Order } from "@/lib/types"
 
 export default function AdminOrderList() {
-  const [orders, setOrders] = useState<DatabaseOrder[]>([])
-  const [loading, setLoading] = useState(true)
-  const [searchTerm, setSearchTerm] = useState("")
-  const [selectedOrder, setSelectedOrder] = useState<DatabaseOrder | null>(null)
+  const [orders, setOrders] = useState<Order[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
   const [processingNote, setProcessingNote] = useState("")
   const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [isUpdating, setIsUpdating] = useState(false)
 
   useEffect(() => {
     loadOrders()
-
-    // Subscribe to real-time updates
-    const subscription = subscribeToOrders((updatedOrders) => {
-      setOrders(updatedOrders)
-    })
-
-    return () => {
-      subscription.unsubscribe()
-    }
   }, [])
 
   const loadOrders = async () => {
     try {
-      const data = await getAllOrders()
-      setOrders(data)
-    } catch (error) {
-      console.error("Failed to load orders:", error)
-      toast({
-        title: "Error",
-        description: "Failed to load orders",
-        variant: "destructive",
-      })
+      setIsLoading(true)
+      setError(null)
+      const allOrders = await getAllOrders()
+      setOrders(allOrders)
+    } catch (err) {
+      console.error("Failed to load orders:", err)
+      setError("Failed to load orders. Please try again.")
     } finally {
-      setLoading(false)
+      setIsLoading(false)
     }
   }
-
-  const filteredOrders = orders.filter(
-    (order) =>
-      order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.product_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.user_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.user_id.toLowerCase().includes(searchTerm.toLowerCase()),
-  )
 
   const handleStatusChange = async (orderId: string, newStatus: string) => {
-    try {
-      await updateOrderStatus(orderId, newStatus)
-      toast({
-        title: "Order Updated",
-        description: `Order status changed to ${newStatus}`,
-        variant: "default",
-      })
-    } catch (error) {
-      console.error("Failed to update order status:", error)
-      toast({
-        title: "Update Failed",
-        description: "There was a problem updating the order status.",
-        variant: "destructive",
-      })
+    const order = orders.find((o) => o.id === orderId)
+    if (!order) return
+
+    if (newStatus === "processing") {
+      setSelectedOrder(order)
+      setProcessingNote(order.processingNote || "")
+      setIsDialogOpen(true)
+    } else {
+      try {
+        await updateOrderStatus(orderId, newStatus)
+        setOrders(orders.map((order) => (order.id === orderId ? { ...order, status: newStatus } : order)))
+      } catch (err) {
+        console.error("Failed to update order status:", err)
+      }
     }
   }
 
-  const handleProcessOrder = (order: DatabaseOrder) => {
-    setSelectedOrder(order)
-    setProcessingNote("")
-    setIsDialogOpen(true)
-  }
-
-  const completeProcessing = async () => {
+  const handleUpdateWithNote = async () => {
     if (!selectedOrder) return
 
     try {
+      setIsUpdating(true)
       await updateOrderStatus(selectedOrder.id, "processing", processingNote)
-      toast({
-        title: "Order Processing",
-        description: `Order is now being processed`,
-        variant: "default",
-      })
+      setOrders(
+        orders.map((order) =>
+          order.id === selectedOrder.id ? { ...order, status: "processing", processingNote } : order,
+        ),
+      )
       setIsDialogOpen(false)
-    } catch (error) {
-      console.error("Failed to process order:", error)
-      toast({
-        title: "Processing Failed",
-        description: "There was a problem processing the order.",
-        variant: "destructive",
-      })
+    } catch (err) {
+      console.error("Failed to update order status:", err)
+    } finally {
+      setIsUpdating(false)
     }
   }
 
-  const completeOrder = async (orderId: string) => {
-    try {
-      await updateOrderStatus(orderId, "completed", "Data bundle has been delivered successfully.")
-      toast({
-        title: "Order Completed",
-        description: `Order has been marked as completed`,
-        variant: "default",
-      })
-    } catch (error) {
-      console.error("Failed to complete order:", error)
-      toast({
-        title: "Completion Failed",
-        description: "There was a problem completing the order.",
-        variant: "destructive",
-      })
-    }
-  }
-
-  if (loading) {
+  if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-8">
-        <Loader2 className="h-8 w-8 animate-spin" />
-        <span className="ml-2">Loading orders...</span>
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
       </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <Alert variant="destructive" className="mb-6">
+        <AlertCircle className="h-4 w-4" />
+        <AlertDescription>{error}</AlertDescription>
+      </Alert>
     )
   }
 
   if (orders.length === 0) {
     return (
-      <Card>
-        <CardContent className="py-10 text-center">
-          <p className="text-gray-500">No orders found.</p>
-        </CardContent>
-      </Card>
+      <div className="text-center py-12">
+        <Package className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+        <h3 className="text-lg font-medium mb-2">No Orders Found</h3>
+        <p className="text-muted-foreground">No orders have been placed yet.</p>
+      </div>
     )
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-2">
-        <Search className="h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder="Search orders by ID, product, or agent..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="max-w-sm"
-        />
-      </div>
+    <div className="space-y-6">
+      <h1 className="text-3xl font-bold">All Orders</h1>
 
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Order ID</TableHead>
-              <TableHead>Product</TableHead>
-              <TableHead>Agent</TableHead>
-              <TableHead>Agent ID</TableHead>
-              <TableHead>Date</TableHead>
-              <TableHead>Price</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredOrders.length > 0 ? (
-              filteredOrders.map((order) => (
-                <TableRow key={order.id}>
-                  <TableCell className="font-medium">{order.id.substring(0, 8)}</TableCell>
-                  <TableCell>{order.product_name}</TableCell>
-                  <TableCell>{order.user_name}</TableCell>
-                  <TableCell>{order.user_id.substring(0, 8)}</TableCell>
-                  <TableCell>{new Date(order.created_at).toLocaleDateString()}</TableCell>
-                  <TableCell>GHS {order.price.toFixed(2)}</TableCell>
-                  <TableCell>
-                    <Badge
-                      className={
-                        order.status === "completed"
-                          ? "bg-green-100 text-green-800 hover:bg-green-100"
-                          : order.status === "pending"
-                            ? "bg-yellow-100 text-yellow-800 hover:bg-yellow-100"
-                            : order.status === "processing"
-                              ? "bg-blue-100 text-blue-800 hover:bg-blue-100"
-                              : "bg-red-100 text-red-800 hover:bg-red-100"
-                      }
-                    >
-                      {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      {order.status === "pending" && (
-                        <Button size="sm" onClick={() => handleProcessOrder(order)}>
-                          Process
-                        </Button>
-                      )}
-                      {order.status === "processing" && (
-                        <Button size="sm" variant="outline" onClick={() => completeOrder(order.id)}>
-                          Mark Complete
-                        </Button>
-                      )}
-                      <Select
-                        defaultValue={order.status}
-                        onValueChange={(value) => handleStatusChange(order.id, value)}
-                      >
-                        <SelectTrigger className="w-[130px]">
-                          <SelectValue placeholder="Update Status" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="pending">Pending</SelectItem>
-                          <SelectItem value="processing">Processing</SelectItem>
-                          <SelectItem value="completed">Completed</SelectItem>
-                          <SelectItem value="cancelled">Cancelled</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={8} className="h-24 text-center">
-                  No results found.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
+      <div className="overflow-x-auto">
+        <table className="w-full">
+          <thead>
+            <tr className="border-b">
+              <th className="text-left py-3 px-2">Order ID</th>
+              <th className="text-left py-3 px-2">Product</th>
+              <th className="text-left py-3 px-2">Agent</th>
+              <th className="text-left py-3 px-2">Date</th>
+              <th className="text-left py-3 px-2">Price</th>
+              <th className="text-left py-3 px-2">Status</th>
+              <th className="text-left py-3 px-2">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {orders.map((order) => (
+              <tr key={order.id} className="border-b">
+                <td className="py-3 px-2">{order.id.substring(0, 8)}</td>
+                <td className="py-3 px-2">{order.productName}</td>
+                <td className="py-3 px-2">{order.userName}</td>
+                <td className="py-3 px-2">{new Date(order.createdAt).toLocaleDateString()}</td>
+                <td className="py-3 px-2">GHS {order.price.toFixed(2)}</td>
+                <td className="py-3 px-2">
+                  <Badge
+                    className={
+                      order.status === "completed"
+                        ? "bg-green-100 text-green-800 hover:bg-green-100"
+                        : order.status === "pending"
+                          ? "bg-yellow-100 text-yellow-800 hover:bg-yellow-100"
+                          : order.status === "processing"
+                            ? "bg-blue-100 text-blue-800 hover:bg-blue-100"
+                            : "bg-red-100 text-red-800 hover:bg-red-100"
+                    }
+                  >
+                    {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                  </Badge>
+                </td>
+                <td className="py-3 px-2">
+                  <Select defaultValue={order.status} onValueChange={(value) => handleStatusChange(order.id, value)}>
+                    <SelectTrigger className="w-[130px]">
+                      <SelectValue placeholder="Update Status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="processing">Processing</SelectItem>
+                      <SelectItem value="completed">Completed</SelectItem>
+                      <SelectItem value="cancelled">Cancelled</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Process Order</DialogTitle>
-            <DialogDescription>Add processing details for order {selectedOrder?.id.substring(0, 8)}</DialogDescription>
+            <DialogTitle>Add Processing Note</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <div className="font-medium">Product:</div>
-              <div className="col-span-3">{selectedOrder?.product_name}</div>
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <div className="font-medium">Agent:</div>
-              <div className="col-span-3">{selectedOrder?.user_name}</div>
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <div className="font-medium">Price:</div>
-              <div className="col-span-3">GHS {selectedOrder?.price.toFixed(2)}</div>
-            </div>
-            <div className="space-y-2">
-              <label htmlFor="note" className="font-medium">
-                Processing Note:
-              </label>
-              <Textarea
-                id="note"
-                placeholder="Add details about the processing (optional)"
-                value={processingNote}
-                onChange={(e) => setProcessingNote(e.target.value)}
-              />
-            </div>
+          <div className="py-4">
+            <p className="mb-2 text-sm text-muted-foreground">
+              Add a note about how you're processing this order. This will be visible to the agent.
+            </p>
+            <Input
+              value={processingNote}
+              onChange={(e) => setProcessingNote(e.target.value)}
+              placeholder="e.g., Verifying payment, will deliver bundle shortly"
+            />
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+            <Button variant="outline" onClick={() => setIsDialogOpen(false)} disabled={isUpdating}>
               Cancel
             </Button>
-            <Button onClick={completeProcessing}>Start Processing</Button>
+            <Button onClick={handleUpdateWithNote} disabled={isUpdating}>
+              {isUpdating ? "Updating..." : "Update Status"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

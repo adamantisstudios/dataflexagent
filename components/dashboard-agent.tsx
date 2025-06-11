@@ -160,16 +160,25 @@ export default function DashboardAgent() {
               ))}
             </div>
           ) : (
-            <p className="text-muted-foreground">No recent orders found.</p>
+            <div className="text-center py-8">
+              <Package className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <p className="text-muted-foreground">No orders found.</p>
+              <p className="text-sm text-muted-foreground mt-2">Place an order to see it here.</p>
+              <Link href="/dashboard/products" passHref>
+                <Button className="mt-4">Browse Data Bundles</Button>
+              </Link>
+            </div>
           )}
         </CardContent>
       </Card>
 
-      <div className="flex justify-center">
-        <Link href="/dashboard/products" passHref>
-          <Button>Browse Data Bundles</Button>
-        </Link>
-      </div>
+      {recentOrders.length === 0 && (
+        <div className="flex justify-center">
+          <Link href="/dashboard/products" passHref>
+            <Button>Browse Data Bundles</Button>
+          </Link>
+        </div>
+      )}
     </div>
   )
 }

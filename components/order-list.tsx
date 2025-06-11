@@ -1,85 +1,79 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { getOrdersByUser, subscribeToUserOrders } from "@/lib/database"
-import type { DatabaseOrder } from "@/lib/supabase"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { useEffect, useState } from "react"
 import { useAuth } from "@/lib/auth-context"
+import { getOrdersByUserId } from "@/lib/data"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { CheckCircle, Package, Loader2, Clock } from "lucide-react"
-import { Progress } from "@/components/ui/progress"
+import { AlertCircle, Clock, CheckCircle, Package } from "lucide-react"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import type { Order } from "@/lib/types"
 
-interface OrderListProps {
-  orders: Order[]
-  isAdmin?: boolean
-}
-
-export default function OrderList({ orders: initialOrders, isAdmin = false }: OrderListProps) {
-  const [orders, setOrders] = useState<DatabaseOrder[]>([])
-  const [loading, setLoading] = useState(true)
+export default function OrderList() {
   const { user } = useAuth()
+  const [orders, setOrders] = useState<Order[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!user) return
+    const loadOrders = async () => {
+      if (!user) return
+
+      try {
+        setIsLoading(true)
+        setError(null)
+        const userOrders = await getOrdersByUserId(user.id)
+        setOrders(userOrders)
+      } catch (err) {
+        console.error("Failed to load orders:", err)
+        setError("Failed to load your orders. Please try again.")
+      } finally {
+        setIsLoading(false)
+      }
+    }
 
     loadOrders()
-
-    // Subscribe to real-time updates for user's orders
-    const subscription = subscribeToUserOrders(user.id, (updatedOrders) => {
-      setOrders(updatedOrders)
-    })
-
-    return () => {
-      subscription.unsubscribe()
-    }
   }, [user])
 
-  const loadOrders = async () => {
-    if (!user) return
-
-    try {
-      const data = await getOrdersByUser(user.id)
-      setOrders(data)
-    } catch (error) {
-      console.error("Failed to load orders:", error)
-    } finally {
-      setLoading(false)
-    }
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    )
   }
 
-  if (loading) {
+  if (error) {
     return (
-      <div className="flex items-center justify-center py-8">
-        <Loader2 className="h-8 w-8 animate-spin" />
-        <span className="ml-2">Loading orders...</span>
-      </div>
+      <Alert variant="destructive" className="mb-6">
+        <AlertCircle className="h-4 w-4" />
+        <AlertDescription>{error}</AlertDescription>
+      </Alert>
     )
   }
 
   if (orders.length === 0) {
     return (
-      <Card>
-        <CardContent className="py-10 text-center">
-          <Package className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-          <p className="text-gray-500">No orders found.</p>
-          <p className="text-sm text-muted-foreground mt-2">Your orders will appear here once you make a purchase.</p>
-        </CardContent>
-      </Card>
+      <div className="text-center py-12">
+        <Package className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+        <h3 className="text-lg font-medium mb-2">No Orders Found</h3>
+        <p className="text-muted-foreground">You haven't placed any orders yet.</p>
+      </div>
     )
   }
 
   return (
     <div className="space-y-6">
+      <h1 className="text-3xl font-bold">My Orders</h1>
+
       {orders.map((order) => (
-        <Card key={order.id}>
-          <CardHeader>
+        <Card key={order.id} className="overflow-hidden">
+          <CardHeader className="bg-muted/50">
             <div className="flex justify-between items-start">
               <div>
-                <CardTitle>{order.product_name}</CardTitle>
+                <CardTitle>{order.productName}</CardTitle>
                 <CardDescription>
-                  Order ID: {order.id.substring(0, 8)} • {new Date(order.created_at).toLocaleDateString()}
+                  Order ID: {order.id.substring(0, 8)} • {new Date(order.createdAt).toLocaleDateString()}
                 </CardDescription>
               </div>
               <Badge
@@ -97,62 +91,51 @@ export default function OrderList({ orders: initialOrders, isAdmin = false }: Or
               </Badge>
             </div>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex justify-between items-center border-b pb-2">
-                <span>Price:</span>
-                <span className="font-bold">GHS {order.price.toFixed(2)}</span>
+          <CardContent className="pt-6">
+            <div className="flex justify-between items-center mb-4">
+              <div>
+                <p className="font-medium">Price</p>
+                <p className="text-2xl font-bold">GHS {order.price.toFixed(2)}</p>
               </div>
 
-              {order.status === "pending" && !isAdmin && (
-                <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-md">
-                  <h4 className="font-medium mb-2 flex items-center gap-2">
-                    <Clock className="h-4 w-4" />
-                    Payment Instructions:
-                  </h4>
-                  <p>
-                    Please send payment to: <strong>0551999901</strong> via Mobile Money.
-                  </p>
-                  <p className="mt-2">Include your Agent ID ({user?.id.substring(0, 8)}) in the payment description.</p>
-                  <p className="mt-3 text-sm text-muted-foreground">
-                    After payment, check your order status from time to time.
-                  </p>
-                  <p className="mt-1 text-sm font-medium text-muted-foreground">
-                    Processing time: 1-40 minutes after payment confirmation.
-                  </p>
+              {order.status === "pending" && (
+                <div className="flex items-center text-yellow-600">
+                  <Clock className="h-5 w-5 mr-2" />
+                  <span>Awaiting payment confirmation</span>
                 </div>
               )}
 
-              {order.status === "processing" && !isAdmin && (
-                <div className="space-y-4">
-                  <Alert className="bg-blue-50">
-                    <Package className="h-4 w-4 text-blue-600" />
-                    <AlertTitle>Your order is being processed</AlertTitle>
-                    <AlertDescription>
-                      {order.processing_note || "Your data bundle is being processed and will be delivered shortly."}
-                    </AlertDescription>
-                  </Alert>
-
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span>Processing</span>
-                      <span>Estimated time: 1-30 minutes</span>
-                    </div>
-                    <Progress value={75} className="h-2" />
-                  </div>
+              {order.status === "processing" && (
+                <div className="flex items-center text-blue-600">
+                  <Package className="h-5 w-5 mr-2" />
+                  <span>{order.processingNote || "Processing your order"}</span>
                 </div>
               )}
 
-              {order.status === "completed" && !isAdmin && (
-                <Alert className="bg-green-50">
-                  <CheckCircle className="h-4 w-4 text-green-600" />
-                  <AlertTitle>Data Bundle Delivered</AlertTitle>
-                  <AlertDescription>
-                    Your data bundle has been successfully delivered. Thank you for using DataFlex Ghana!
-                  </AlertDescription>
-                </Alert>
+              {order.status === "completed" && (
+                <div className="flex items-center text-green-600">
+                  <CheckCircle className="h-5 w-5 mr-2" />
+                  <span>Data bundle delivered successfully</span>
+                </div>
               )}
             </div>
+
+            {order.status === "pending" && (
+              <Alert className="bg-yellow-50 border-yellow-200">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  Please send payment to <strong>0551999901</strong> via Mobile Money with your Agent ID ({user?.id}) as
+                  reference.
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {order.processingNote && order.status !== "pending" && (
+              <div className="mt-4 p-4 bg-muted rounded-md">
+                <p className="font-medium">Processing Note:</p>
+                <p>{order.processingNote}</p>
+              </div>
+            )}
           </CardContent>
         </Card>
       ))}
