@@ -1,23 +1,26 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  serverExternalPackages: ['@supabase/supabase-js'],
   experimental: {
-    serverComponentsExternalPackages: ['@supabase/supabase-js']
+    esmExternals: 'loose'
   },
-  images: {
-    domains: ['placeholder.svg'],
-    unoptimized: true,
-  },
-  // Disable static optimization for problematic pages
-  trailingSlash: false,
-  // Force dynamic rendering for checkout pages
-  async rewrites() {
-    return []
+  webpack: (config) => {
+    config.resolve.fallback = {
+      ...config.resolve.fallback,
+      fs: false,
+      net: false,
+      tls: false,
+    }
+    return config
   },
   eslint: {
     ignoreDuringBuilds: true,
   },
   typescript: {
     ignoreBuildErrors: true,
+  },
+  images: {
+    unoptimized: true,
   },
 }
 

@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react"
 import { useAuth } from "@/lib/auth-context"
-import { getRecentOrders, getStats } from "@/lib/data"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import type { Order } from "@/lib/types"
 import Link from "next/link"
@@ -24,10 +23,17 @@ export default function DashboardAgent() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        if (user) {
-          const orders = await getRecentOrders(user.id)
-          const userStats = await getStats(user.id)
-          setRecentOrders(orders)
+        if (user && typeof window !== "undefined") {
+          const orders = JSON.parse(localStorage.getItem("orders") || "[]")
+          const userOrders = orders.filter((order: Order) => order.userId === user.id)
+
+          setRecentOrders(userOrders.slice(0, 5)) // Show last 5 orders
+
+          const userStats = {
+            totalOrders: userOrders.length,
+            pendingOrders: userOrders.filter((o: Order) => o.status === "pending").length,
+            completedOrders: userOrders.filter((o: Order) => o.status === "completed").length,
+          }
           setStats(userStats)
         }
       } catch (error) {
@@ -38,6 +44,10 @@ export default function DashboardAgent() {
     }
 
     loadData()
+
+    // Set up real-time updates
+    const interval = setInterval(loadData, 3000)
+    return () => clearInterval(interval)
   }, [user])
 
   if (isLoading) {
@@ -56,7 +66,7 @@ export default function DashboardAgent() {
         <AlertCircle className="h-4 w-4" />
         <AlertTitle>Important Information</AlertTitle>
         <AlertDescription>
-          Your Agent ID is <strong>{user?.id}</strong>. Always use this ID when making payments for orders.
+          Your Agent Code is <strong>{user?.agent_code}</strong>. Always use this code when making payments for orders.
         </AlertDescription>
       </Alert>
 
@@ -135,7 +145,7 @@ export default function DashboardAgent() {
                     {order.status === "processing" && (
                       <div className="flex items-center text-blue-600">
                         <Package className="h-4 w-4 mr-1" />
-                        <span>{order.processingNote || "Processing your order"}</span>
+                        <span>Processing your order</span>
                       </div>
                     )}
 
@@ -151,8 +161,8 @@ export default function DashboardAgent() {
                     <Alert className="mt-3 bg-yellow-50">
                       <AlertCircle className="h-4 w-4" />
                       <AlertDescription>
-                        Please send payment to <strong>0551999901</strong> via Mobile Money with your Agent ID (
-                        {user?.id}) as reference.
+                        Please send payment to <strong>0551999901</strong> via Mobile Money with your Agent Code (
+                        {user?.agent_code}) as reference.
                       </AlertDescription>
                     </Alert>
                   )}
