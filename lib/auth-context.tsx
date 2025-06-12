@@ -3,8 +3,6 @@
 import type React from "react"
 
 import { createContext, useContext, useState, useEffect } from "react"
-import { type Session, type SupabaseClient, useSession, useSupabaseClient } from "@supabase/auth-helpers-react"
-import { useRouter } from "next/router"
 
 // Define the User type
 export type User = {
@@ -19,14 +17,11 @@ export type User = {
 
 // Define the AuthContext type
 type AuthContextType = {
-  supabaseClient: SupabaseClient | null
-  session: Session | null
   user: User | null
   isLoading: boolean
-  signUp: (email: string, password?: string) => Promise<any>
-  signIn: (email: string, password?: string) => Promise<any>
-  signOut: () => Promise<boolean>
-  register: (email: string, password?: string, name?: string, phone?: string) => Promise<any>
+  login: (email: string, password: string) => Promise<boolean>
+  logout: () => void
+  register: (email: string, password: string, name: string, phone: string) => Promise<boolean>
 }
 
 // Create the AuthContext
@@ -34,90 +29,23 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 // AuthProvider component
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const supabaseClient = useSupabaseClient()
-  const session = useSession()
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
-  const router = useRouter()
 
   useEffect(() => {
-    async function loadUser() {
-      setIsLoading(true)
-      if (session) {
-        const { data: user, error } = await supabaseClient
-          .from("users")
-          .select("*")
-          .eq("email", session?.user?.email)
-          .single()
-
-        if (error) {
-          console.log("Error fetching user:", error)
+    // Load user from localStorage on mount
+    const loadUser = () => {
+      if (typeof window !== "undefined") {
+        const savedUser = localStorage.getItem("currentUser")
+        if (savedUser) {
+          setUser(JSON.parse(savedUser))
         }
-
-        if (user) {
-          setUser(user as User)
-        }
-      } else {
-        setUser(null)
       }
       setIsLoading(false)
     }
 
     loadUser()
-  }, [session, supabaseClient])
-
-  const signUp = async (email: string, password?: string) => {
-    try {
-      const { data, error } = await supabaseClient.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
-        },
-      })
-      if (error) {
-        console.log("Error signing up:", error)
-        return { error }
-      }
-      return { data }
-    } catch (error: any) {
-      console.log("Error signing up:", error)
-      return { error }
-    }
-  }
-
-  const signIn = async (email: string, password?: string) => {
-    try {
-      const { data, error } = await supabaseClient.auth.signInWithPassword({
-        email,
-        password,
-      })
-      if (error) {
-        console.log("Error signing in:", error)
-        return { error }
-      }
-      return { data }
-    } catch (error: any) {
-      console.log("Error signing in:", error)
-      return { error }
-    }
-  }
-
-  const signOut = async () => {
-    try {
-      const { error } = await supabaseClient.auth.signOut()
-      if (error) {
-        console.log("Error signing out:", error)
-        return false
-      }
-      setUser(null)
-      router.push("/")
-      return true
-    } catch (error: any) {
-      console.log("Error signing out:", error)
-      return false
-    }
-  }
+  }, [])
 
   // Helper function to generate agent code
   function generateAgentCode(): string {
@@ -129,60 +57,90 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return result
   }
 
-  const register = async (email: string, password?: string, name?: string, phone?: string) => {
+  const login = async (email: string, password: string): Promise<boolean> => {
     try {
-      const { data: authData, error: authError } = await supabaseClient.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
-        },
-      })
-
-      if (authError) {
-        console.error("Error signing up:", authError)
-        return { error: authError }
+      // Simple mock authentication - replace with real auth later
+      if (email === "admin@dataflex.com" && password === "admin123") {
+        const adminUser: User = {
+          id: "admin-1",
+          email: "admin@dataflex.com",
+          name: "Admin User",
+          role: "admin",
+          phone: "0000000000",
+          created_at: new Date().toISOString(),
+          agent_code: "ADMIN1",
+        }
+        setUser(adminUser)
+        if (typeof window !== "undefined") {
+          localStorage.setItem("currentUser", JSON.stringify(adminUser))
+        }
+        return true
       }
 
-      // Generate agent code
-      const agentCode = generateAgentCode()
-
-      const { data, error } = await supabaseClient
-        .from("users")
-        .insert([
-          {
-            name,
-            email,
-            role: "agent",
-            phone,
-            agent_code: agentCode,
-            created_at: new Date().toISOString(),
-          },
-        ])
-        .select()
-        .single()
-
-      if (error) {
-        console.error("Error creating user:", error)
-        return { error }
+      // Check for existing users in localStorage
+      if (typeof window !== "undefined") {
+        const users = JSON.parse(localStorage.getItem("users") || "[]")
+        const foundUser = users.find((u: User) => u.email === email)
+        if (foundUser) {
+          setUser(foundUser)
+          localStorage.setItem("currentUser", JSON.stringify(foundUser))
+          return true
+        }
       }
 
-      setUser(data as User)
-      return { data }
-    } catch (error: any) {
-      console.error("Error during registration:", error)
-      return { error }
+      return false
+    } catch (error) {
+      console.error("Login error:", error)
+      return false
+    }
+  }
+
+  const logout = () => {
+    setUser(null)
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("currentUser")
+      window.location.href = "/"
+    }
+  }
+
+  const register = async (email: string, password: string, name: string, phone: string): Promise<boolean> => {
+    try {
+      if (typeof window !== "undefined") {
+        const users = JSON.parse(localStorage.getItem("users") || "[]")
+
+        // Check if user already exists
+        if (users.find((u: User) => u.email === email)) {
+          return false
+        }
+
+        const newUser: User = {
+          id: `user_${Date.now()}`,
+          email,
+          name,
+          role: "agent",
+          phone,
+          created_at: new Date().toISOString(),
+          agent_code: generateAgentCode(),
+        }
+
+        users.push(newUser)
+        localStorage.setItem("users", JSON.stringify(users))
+        setUser(newUser)
+        localStorage.setItem("currentUser", JSON.stringify(newUser))
+        return true
+      }
+      return false
+    } catch (error) {
+      console.error("Registration error:", error)
+      return false
     }
   }
 
   const value: AuthContextType = {
-    supabaseClient,
-    session,
     user,
     isLoading,
-    signUp,
-    signIn,
-    signOut,
+    login,
+    logout,
     register,
   }
 
