@@ -1,5 +1,5 @@
-import ClientWrapper from './client-wrapper';
+import CheckoutClientPage from "./CheckoutClientPage"
 
-export default function Page() {
-  return <ClientWrapper />;
+export default function CheckoutPage() {
+  return <CheckoutClientPage />
 }
