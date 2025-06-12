@@ -10,6 +10,11 @@ export default function Header() {
   const { user, logout } = useAuth()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
+  const handleLogout = () => {
+    logout()
+    window.location.href = "/"
+  }
+
   return (
     <header className="bg-white shadow-sm">
       <div className="container mx-auto px-4">
@@ -53,7 +58,7 @@ export default function Header() {
                     </Link>
                   </>
                 )}
-                <Button variant="ghost" onClick={logout}>
+                <Button variant="ghost" onClick={handleLogout}>
                   Logout
                 </Button>
               </>
@@ -142,7 +147,7 @@ export default function Header() {
                 <Button
                   variant="ghost"
                   onClick={() => {
-                    logout()
+                    handleLogout()
                     setMobileMenuOpen(false)
                   }}
                   className="w-full justify-start px-0"

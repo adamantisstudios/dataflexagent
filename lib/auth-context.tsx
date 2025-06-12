@@ -19,9 +19,10 @@ export type User = {
 type AuthContextType = {
   user: User | null
   isLoading: boolean
-  login: (email: string, password: string) => Promise<boolean>
+  adminLogin: (email: string, password: string) => Promise<any>
+  login: (email: string, password: string) => Promise<any>
   logout: () => void
-  register: (email: string, password: string, name: string, phone: string) => Promise<boolean>
+  register: (email: string, password: string, name: string, phone: string) => Promise<any>
 }
 
 // Create the AuthContext
@@ -38,7 +39,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (typeof window !== "undefined") {
         const savedUser = localStorage.getItem("currentUser")
         if (savedUser) {
-          setUser(JSON.parse(savedUser))
+          try {
+            setUser(JSON.parse(savedUser))
+          } catch (e) {
+            console.error("Error parsing user from localStorage:", e)
+            localStorage.removeItem("currentUser")
+          }
         }
       }
       setIsLoading(false)
@@ -57,13 +63,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return result
   }
 
-  const login = async (email: string, password: string): Promise<boolean> => {
+  const adminLogin = async (email: string, password: string) => {
     try {
-      // Simple mock authentication - replace with real auth later
-      if (email === "admin@dataflex.com" && password === "admin123") {
-        const adminUser: User = {
+      // Simple mock authentication for admin
+      if (email === "admin@dataflexghana.com" && password === "admin123") {
+        const adminUser = {
           id: "admin-1",
-          email: "admin@dataflex.com",
+          email: "admin@dataflexghana.com",
           name: "Admin User",
           role: "admin",
           phone: "0000000000",
@@ -74,24 +80,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (typeof window !== "undefined") {
           localStorage.setItem("currentUser", JSON.stringify(adminUser))
         }
-        return true
+        return { success: true, user: adminUser }
       }
+      return { error: { message: "Invalid admin credentials" } }
+    } catch (error: any) {
+      console.error("Login error:", error)
+      return { error }
+    }
+  }
 
+  const login = async (email: string, password: string) => {
+    try {
       // Check for existing users in localStorage
       if (typeof window !== "undefined") {
         const users = JSON.parse(localStorage.getItem("users") || "[]")
         const foundUser = users.find((u: User) => u.email === email)
+
         if (foundUser) {
           setUser(foundUser)
           localStorage.setItem("currentUser", JSON.stringify(foundUser))
-          return true
+          return { success: true, user: foundUser }
         }
       }
 
-      return false
-    } catch (error) {
+      return { error: { message: "Invalid credentials" } }
+    } catch (error: any) {
       console.error("Login error:", error)
-      return false
+      return { error }
     }
   }
 
@@ -99,18 +114,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(null)
     if (typeof window !== "undefined") {
       localStorage.removeItem("currentUser")
-      window.location.href = "/"
     }
   }
 
-  const register = async (email: string, password: string, name: string, phone: string): Promise<boolean> => {
+  const register = async (email: string, password: string, name: string, phone: string) => {
     try {
       if (typeof window !== "undefined") {
         const users = JSON.parse(localStorage.getItem("users") || "[]")
 
         // Check if user already exists
         if (users.find((u: User) => u.email === email)) {
-          return false
+          return { error: { message: "User already exists" } }
         }
 
         const newUser: User = {
@@ -127,18 +141,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         localStorage.setItem("users", JSON.stringify(users))
         setUser(newUser)
         localStorage.setItem("currentUser", JSON.stringify(newUser))
-        return true
+        return { success: true, user: newUser }
       }
-      return false
-    } catch (error) {
+      return { error: { message: "Browser storage not available" } }
+    } catch (error: any) {
       console.error("Registration error:", error)
-      return false
+      return { error }
     }
   }
 
   const value: AuthContextType = {
     user,
     isLoading,
+    adminLogin,
     login,
     logout,
     register,
