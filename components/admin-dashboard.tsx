@@ -5,97 +5,97 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Package, Users, DollarSign, TrendingUp, Eye, CheckCircle, XCircle } from "lucide-react"
+import { RefreshCw, Users, ShoppingCart, DollarSign, TrendingUp } from "lucide-react"
 
 interface Order {
   id: string
   productName: string
+  productPrice: number
   customerName: string
   customerPhone: string
   agentCode: string
-  productPrice: number
   status: string
   createdAt: string
 }
 
 export default function AdminDashboard() {
   const [orders, setOrders] = useState<Order[]>([])
-  const [stats, setStats] = useState({
-    totalOrders: 0,
-    totalRevenue: 0,
-    pendingOrders: 0,
-    completedOrders: 0,
-  })
+  const [loading, setLoading] = useState(true)
+
+  const loadOrders = () => {
+    try {
+      if (typeof window !== "undefined") {
+        const storedOrders = localStorage.getItem("orders")
+        if (storedOrders) {
+          const parsedOrders = JSON.parse(storedOrders)
+          setOrders(parsedOrders)
+        }
+      }
+    } catch (error) {
+      console.error("Error loading orders:", error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   useEffect(() => {
     loadOrders()
-    // Set up interval to refresh data every 5 seconds
+    // Auto-refresh every 5 seconds
     const interval = setInterval(loadOrders, 5000)
     return () => clearInterval(interval)
   }, [])
 
-  const loadOrders = () => {
-    try {
-      const storedOrders = JSON.parse(localStorage.getItem("orders") || "[]")
-      setOrders(storedOrders)
-
-      // Calculate stats
-      const totalOrders = storedOrders.length
-      const totalRevenue = storedOrders.reduce((sum: number, order: Order) => sum + order.productPrice, 0)
-      const pendingOrders = storedOrders.filter((order: Order) => order.status === "pending").length
-      const completedOrders = storedOrders.filter((order: Order) => order.status === "completed").length
-
-      setStats({
-        totalOrders,
-        totalRevenue,
-        pendingOrders,
-        completedOrders,
-      })
-    } catch (error) {
-      console.error("Error loading orders:", error)
-    }
-  }
-
   const updateOrderStatus = (orderId: string, newStatus: string) => {
     try {
-      const updatedOrders = orders.map((order) => (order.id === orderId ? { ...order, status: newStatus } : order))
-      setOrders(updatedOrders)
-      localStorage.setItem("orders", JSON.stringify(updatedOrders))
-      loadOrders() // Refresh stats
+      if (typeof window !== "undefined") {
+        const updatedOrders = orders.map((order) => (order.id === orderId ? { ...order, status: newStatus } : order))
+        setOrders(updatedOrders)
+        localStorage.setItem("orders", JSON.stringify(updatedOrders))
+      }
     } catch (error) {
       console.error("Error updating order status:", error)
     }
   }
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "pending":
-        return <Badge variant="outline">Pending</Badge>
-      case "completed":
-        return <Badge variant="default">Completed</Badge>
-      case "cancelled":
-        return <Badge variant="destructive">Cancelled</Badge>
-      default:
-        return <Badge variant="secondary">{status}</Badge>
-    }
+  const totalOrders = orders.length
+  const totalRevenue = orders.reduce((sum, order) => sum + order.productPrice, 0)
+  const pendingOrders = orders.filter((order) => order.status === "pending").length
+  const completedOrders = orders.filter((order) => order.status === "completed").length
+
+  if (loading) {
+    return (
+      <div className="p-6">
+        <div className="animate-pulse">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="h-32 bg-gray-200 rounded"></div>
+            ))}
+          </div>
+          <div className="h-96 bg-gray-200 rounded"></div>
+        </div>
+      </div>
+    )
   }
 
   return (
-    <div className="space-y-6">
-      <div>
+    <div className="p-6">
+      <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Admin Dashboard</h1>
-        <p className="text-gray-600">Manage your data business operations</p>
+        <Button onClick={loadOrders} variant="outline" size="sm">
+          <RefreshCw className="h-4 w-4 mr-2" />
+          Refresh
+        </Button>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Orders</CardTitle>
-            <Package className="h-4 w-4 text-muted-foreground" />
+            <ShoppingCart className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.totalOrders}</div>
+            <div className="text-2xl font-bold">{totalOrders}</div>
             <p className="text-xs text-muted-foreground">All time orders</p>
           </CardContent>
         </Card>
@@ -106,7 +106,7 @@ export default function AdminDashboard() {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">GH₵{stats.totalRevenue}</div>
+            <div className="text-2xl font-bold">GH₵{totalRevenue}</div>
             <p className="text-xs text-muted-foreground">Total earnings</p>
           </CardContent>
         </Card>
@@ -117,7 +117,7 @@ export default function AdminDashboard() {
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.pendingOrders}</div>
+            <div className="text-2xl font-bold">{pendingOrders}</div>
             <p className="text-xs text-muted-foreground">Awaiting processing</p>
           </CardContent>
         </Card>
@@ -128,24 +128,23 @@ export default function AdminDashboard() {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.completedOrders}</div>
+            <div className="text-2xl font-bold">{completedOrders}</div>
             <p className="text-xs text-muted-foreground">Successfully processed</p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Recent Orders */}
+      {/* Orders Table */}
       <Card>
         <CardHeader>
           <CardTitle>Recent Orders</CardTitle>
-          <CardDescription>Latest orders from your agents</CardDescription>
+          <CardDescription>Manage and track all customer orders</CardDescription>
         </CardHeader>
         <CardContent>
           {orders.length === 0 ? (
             <div className="text-center py-8">
-              <Package className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No orders yet</h3>
-              <p className="text-gray-600">Orders will appear here when agents start placing them.</p>
+              <p className="text-muted-foreground">No orders found</p>
+              <p className="text-sm text-muted-foreground mt-2">Orders will appear here when customers place them</p>
             </div>
           ) : (
             <Table>
@@ -154,6 +153,7 @@ export default function AdminDashboard() {
                   <TableHead>Order ID</TableHead>
                   <TableHead>Product</TableHead>
                   <TableHead>Customer</TableHead>
+                  <TableHead>Phone</TableHead>
                   <TableHead>Agent Code</TableHead>
                   <TableHead>Amount</TableHead>
                   <TableHead>Status</TableHead>
@@ -162,45 +162,42 @@ export default function AdminDashboard() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {orders.slice(0, 10).map((order) => (
+                {orders.map((order) => (
                   <TableRow key={order.id}>
-                    <TableCell className="font-mono text-sm">{order.id.slice(-8)}</TableCell>
-                    <TableCell>{order.productName}</TableCell>
-                    <TableCell>
-                      <div>
-                        <div className="font-medium">{order.customerName}</div>
-                        <div className="text-sm text-gray-600">{order.customerPhone}</div>
-                      </div>
-                    </TableCell>
+                    <TableCell className="font-mono text-xs">{order.id.slice(-8)}</TableCell>
+                    <TableCell className="font-medium">{order.productName}</TableCell>
+                    <TableCell>{order.customerName}</TableCell>
+                    <TableCell>{order.customerPhone}</TableCell>
                     <TableCell>
                       <Badge variant="outline">{order.agentCode}</Badge>
                     </TableCell>
                     <TableCell>GH₵{order.productPrice}</TableCell>
-                    <TableCell>{getStatusBadge(order.status)}</TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={
+                          order.status === "completed"
+                            ? "default"
+                            : order.status === "pending"
+                              ? "secondary"
+                              : "destructive"
+                        }
+                      >
+                        {order.status}
+                      </Badge>
+                    </TableCell>
                     <TableCell>{new Date(order.createdAt).toLocaleDateString()}</TableCell>
                     <TableCell>
                       <div className="flex gap-2">
                         {order.status === "pending" && (
-                          <>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => updateOrderStatus(order.id, "completed")}
-                            >
-                              <CheckCircle className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => updateOrderStatus(order.id, "cancelled")}
-                            >
-                              <XCircle className="h-4 w-4" />
-                            </Button>
-                          </>
+                          <Button size="sm" onClick={() => updateOrderStatus(order.id, "completed")}>
+                            Complete
+                          </Button>
                         )}
-                        <Button size="sm" variant="ghost">
-                          <Eye className="h-4 w-4" />
-                        </Button>
+                        {order.status === "completed" && (
+                          <Button size="sm" variant="outline" onClick={() => updateOrderStatus(order.id, "pending")}>
+                            Revert
+                          </Button>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>

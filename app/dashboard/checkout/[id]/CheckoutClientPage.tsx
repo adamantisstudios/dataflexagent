@@ -13,43 +13,13 @@ import { Badge } from "@/components/ui/badge"
 import { ArrowLeft, CreditCard, Phone, MapPin } from "lucide-react"
 import { toast } from "@/hooks/use-toast"
 
-// Static product data to avoid import issues
+// Static product data
 const products = [
-  {
-    id: "mtn-1gb",
-    name: "MTN 1GB",
-    description: "1GB data bundle valid for 30 days",
-    price: 5,
-    category: "MTN",
-  },
-  {
-    id: "mtn-2gb",
-    name: "MTN 2GB",
-    description: "2GB data bundle valid for 30 days",
-    price: 9,
-    category: "MTN",
-  },
-  {
-    id: "mtn-5gb",
-    name: "MTN 5GB",
-    description: "5GB data bundle valid for 30 days",
-    price: 20,
-    category: "MTN",
-  },
-  {
-    id: "mtn-10gb",
-    name: "MTN 10GB",
-    description: "10GB data bundle valid for 30 days",
-    price: 35,
-    category: "MTN",
-  },
-  {
-    id: "mtn-20gb",
-    name: "MTN 20GB",
-    description: "20GB data bundle valid for 30 days",
-    price: 65,
-    category: "MTN",
-  },
+  { id: "mtn-1gb", name: "MTN 1GB", description: "1GB data bundle valid for 30 days", price: 5, category: "MTN" },
+  { id: "mtn-2gb", name: "MTN 2GB", description: "2GB data bundle valid for 30 days", price: 9, category: "MTN" },
+  { id: "mtn-5gb", name: "MTN 5GB", description: "5GB data bundle valid for 30 days", price: 20, category: "MTN" },
+  { id: "mtn-10gb", name: "MTN 10GB", description: "10GB data bundle valid for 30 days", price: 35, category: "MTN" },
+  { id: "mtn-20gb", name: "MTN 20GB", description: "20GB data bundle valid for 30 days", price: 65, category: "MTN" },
   {
     id: "vodafone-1gb",
     name: "Vodafone 1GB",
@@ -98,8 +68,6 @@ export default function CheckoutClientPage() {
   const params = useParams()
   const [isLoading, setIsLoading] = useState(false)
   const [mounted, setMounted] = useState(false)
-
-  // Form state
   const [formData, setFormData] = useState({
     customerName: "",
     customerPhone: "",
@@ -112,15 +80,11 @@ export default function CheckoutClientPage() {
     setMounted(true)
   }, [])
 
-  // Find the product
   const product = products.find((p) => p.id === params?.id)
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }))
+    setFormData((prev) => ({ ...prev, [name]: value }))
   }
 
   const handleBack = () => {
@@ -131,13 +95,11 @@ export default function CheckoutClientPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-
     if (!mounted) return
 
     setIsLoading(true)
 
     try {
-      // Validate required fields
       if (!formData.customerName || !formData.customerPhone || !formData.agentCode) {
         toast({
           title: "Missing Information",
@@ -156,7 +118,6 @@ export default function CheckoutClientPage() {
         return
       }
 
-      // Create order object
       const orderData = {
         id: `order_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         productId: product.id,
@@ -171,7 +132,6 @@ export default function CheckoutClientPage() {
         createdAt: new Date().toISOString(),
       }
 
-      // Store in localStorage for now
       if (typeof window !== "undefined") {
         const existingOrders = JSON.parse(localStorage.getItem("orders") || "[]")
         existingOrders.push(orderData)
@@ -183,10 +143,11 @@ export default function CheckoutClientPage() {
         description: `Your order for ${product.name} has been submitted.`,
       })
 
-      // Redirect to dashboard
-      if (typeof window !== "undefined") {
-        window.location.href = "/dashboard"
-      }
+      setTimeout(() => {
+        if (typeof window !== "undefined") {
+          window.location.href = "/dashboard"
+        }
+      }, 1500)
     } catch (error) {
       console.error("Error placing order:", error)
       toast({
@@ -236,7 +197,6 @@ export default function CheckoutClientPage() {
       </Button>
 
       <div className="grid md:grid-cols-2 gap-8">
-        {/* Product Details */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -271,7 +231,6 @@ export default function CheckoutClientPage() {
           </CardContent>
         </Card>
 
-        {/* Checkout Form */}
         <Card>
           <CardHeader>
             <CardTitle>Customer Information</CardTitle>
