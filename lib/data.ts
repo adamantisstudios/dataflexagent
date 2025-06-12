@@ -1,6 +1,16 @@
 import { supabase } from "./supabase"
 import type { Order, User, Product } from "./types"
 
+// Add the generateAgentCode function at the top
+function generateAgentCode(): string {
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+  let result = ""
+  for (let i = 0; i < 6; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length))
+  }
+  return result
+}
+
 // MTN bundles
 export const mtnBundles = [
   { id: "mtn-1gb", name: "1GB", price: 6.0, provider: "MTN", validity: "3 months" },
@@ -61,6 +71,79 @@ export const telecelBundles = [
 export const products = [...mtnBundles, ...airtelTigoBundles, ...telecelBundles]
 
 // Real database functions
+// Update the createUser function
+export async function createUser(userData: {
+  name: string
+  email: string
+  role: "admin" | "agent"
+  phone?: string
+  password?: string
+}): Promise<User> {
+  console.log("Creating user:", userData.name, userData.email, userData.role)
+
+  const agentCode = userData.role === "agent" ? generateAgentCode() : undefined
+
+  const { data, error } = await supabase
+    .from("users")
+    .insert([
+      {
+        name: userData.name,
+        email: userData.email,
+        role: userData.role,
+        phone: userData.phone,
+        agent_code: agentCode,
+        password: userData.password || "password", // Default password
+        created_at: new Date().toISOString(),
+      },
+    ])
+    .select()
+    .single()
+
+  if (error) {
+    console.error("Database error creating user:", error)
+    throw new Error("Failed to create user")
+  }
+
+  console.log("User created successfully:", data.id)
+
+  return {
+    id: data.id,
+    name: data.name,
+    email: data.email,
+    role: data.role,
+    phone: data.phone,
+    agent_code: data.agent_code,
+  }
+}
+
+// Update getUserByEmail function
+export async function getUserByEmail(email: string): Promise<User | null> {
+  console.log("Looking up user by email:", email)
+
+  const { data, error } = await supabase.from("users").select("*").eq("email", email).single()
+
+  if (error) {
+    if (error.code === "PGRST116") {
+      // No rows returned
+      console.log("No user found with email:", email)
+      return null
+    }
+    console.error("Database error looking up user:", error)
+    throw new Error("Failed to fetch user")
+  }
+
+  console.log("User found:", data.id, data.name)
+
+  return {
+    id: data.id,
+    name: data.name,
+    email: data.email,
+    role: data.role,
+    phone: data.phone,
+    agent_code: data.agent_code,
+  }
+}
+
 export async function createOrder(orderData: {
   productId: string
   productName: string
@@ -376,72 +459,6 @@ export async function getAnalytics() {
       topAgents: [],
       recentActivity: [],
     }
-  }
-}
-
-export async function createUser(userData: {
-  name: string
-  email: string
-  role: "admin" | "agent"
-  phone?: string
-  password?: string
-}): Promise<User> {
-  console.log("Creating user:", userData.name, userData.email, userData.role)
-
-  const { data, error } = await supabase
-    .from("users")
-    .insert([
-      {
-        name: userData.name,
-        email: userData.email,
-        role: userData.role,
-        phone: userData.phone,
-        password: userData.password || "password", // Default password
-        created_at: new Date().toISOString(),
-      },
-    ])
-    .select()
-    .single()
-
-  if (error) {
-    console.error("Database error creating user:", error)
-    throw new Error("Failed to create user")
-  }
-
-  console.log("User created successfully:", data.id)
-
-  return {
-    id: data.id,
-    name: data.name,
-    email: data.email,
-    role: data.role,
-    phone: data.phone,
-  }
-}
-
-export async function getUserByEmail(email: string): Promise<User | null> {
-  console.log("Looking up user by email:", email)
-
-  const { data, error } = await supabase.from("users").select("*").eq("email", email).single()
-
-  if (error) {
-    if (error.code === "PGRST116") {
-      // No rows returned
-      console.log("No user found with email:", email)
-      return null
-    }
-    console.error("Database error looking up user:", error)
-    throw new Error("Failed to fetch user")
-  }
-
-  console.log("User found:", data.id, data.name)
-
-  return {
-    id: data.id,
-    name: data.name,
-    email: data.email,
-    role: data.role,
-    phone: data.phone,
   }
 }
 

@@ -36,14 +36,7 @@ export default function Footer() {
                   Register
                 </a>
               </li>
-              <li>
-                <button
-                  onClick={handleAdminClick}
-                  className="text-gray-600 hover:text-primary transition-colors text-left underline"
-                >
-                  Admin Login
-                </button>
-              </li>
+              {/* Removed admin login link */}
             </ul>
           </div>
         </div>

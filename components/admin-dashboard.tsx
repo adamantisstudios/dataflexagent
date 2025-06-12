@@ -37,47 +37,59 @@ export default function AdminDashboard() {
   const [isClearingOrders, setIsClearingOrders] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  // Replace the loadData function with this improved version:
   const loadData = async () => {
     try {
       setIsLoading(true)
       setError(null)
 
-      // Fetch all orders
+      console.log("Loading admin dashboard data...")
+
+      // Fetch all orders with better error handling
       const { data: ordersData, error: ordersError } = await supabase
         .from("orders")
         .select("*")
         .order("created_at", { ascending: false })
 
       if (ordersError) {
-        throw new Error("Failed to fetch orders")
+        console.error("Orders fetch error:", ordersError)
+        throw new Error(`Failed to fetch orders: ${ordersError.message}`)
       }
 
-      // Fetch all agents
+      console.log("Orders fetched:", ordersData?.length || 0)
+
+      // Fetch all agents with better error handling
       const { data: agentsData, error: agentsError } = await supabase.from("users").select("*").eq("role", "agent")
 
       if (agentsError) {
-        throw new Error("Failed to fetch agents")
+        console.error("Agents fetch error:", agentsError)
+        // Don't throw error for agents, just log it
+        console.warn("Could not fetch agents, continuing with orders only")
       }
 
-      // Transform orders data
+      console.log("Agents fetched:", agentsData?.length || 0)
+
+      // Transform orders data with null checks
       const transformedOrders: Order[] = (ordersData || []).map((order) => ({
         id: order.id,
-        productId: order.product_id,
-        productName: order.product_name,
-        userId: order.user_id,
-        userName: order.user_name,
-        status: order.status,
-        price: order.price,
-        createdAt: order.created_at,
-        updatedAt: order.updated_at,
-        processingNote: order.processing_note,
+        productId: order.product_id || "",
+        productName: order.product_name || "Unknown Product",
+        userId: order.user_id || "",
+        userName: order.user_name || "Unknown User",
+        status: order.status || "pending",
+        price: Number(order.price) || 0,
+        createdAt: order.created_at || new Date().toISOString(),
+        updatedAt: order.updated_at || order.created_at || new Date().toISOString(),
+        processingNote: order.processing_note || "",
       }))
 
-      // Calculate stats
+      // Calculate stats with null checks
       const totalOrders = transformedOrders.length
       const pendingOrders = transformedOrders.filter((order) => order.status === "pending").length
       const completedOrders = transformedOrders.filter((order) => order.status === "completed").length
       const totalAgents = agentsData?.length || 0
+
+      console.log("Stats calculated:", { totalOrders, pendingOrders, completedOrders, totalAgents })
 
       setOrders(transformedOrders)
       setStats({
@@ -96,6 +108,20 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     loadData()
+
+    // Set up real-time subscription for orders
+    const ordersSubscription = supabase
+      .channel("orders-changes")
+      .on("postgres_changes", { event: "*", schema: "public", table: "orders" }, (payload) => {
+        console.log("Real-time order change:", payload)
+        loadData() // Reload data when orders change
+      })
+      .subscribe()
+
+    // Cleanup subscription
+    return () => {
+      ordersSubscription.unsubscribe()
+    }
   }, [])
 
   const handleStatusChange = async (orderId: string, newStatus: string) => {

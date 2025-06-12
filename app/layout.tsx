@@ -15,6 +15,7 @@ export const metadata: Metadata = {
   title: "DataFlex Ghana - Data Bundle Sales Platform",
   description:
     "Your trusted partner for data bundle sales and distribution across Ghana. Fast, reliable, and affordable data bundles for all networks.",
+    generator: 'v0.dev'
 }
 
 export default function RootLayout({

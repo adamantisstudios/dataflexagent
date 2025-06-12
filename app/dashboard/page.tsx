@@ -1,32 +1,37 @@
 "use client"
 
-import { useEffect } from "react"
-import { useAuth } from "@/lib/auth-context"
-import { useRouter } from "next/navigation"
-import DashboardAgent from "@/components/dashboard-agent"
-import DashboardAdmin from "@/components/dashboard-admin"
+import { useSession } from "next-auth/react"
+import { redirect } from "next/navigation"
 
-export default function DashboardPage() {
-  const { user, loading } = useAuth()
-  const router = useRouter()
+export default function Dashboard() {
+  const { data: session, status } = useSession({
+    required: true,
+    onUnauthenticated() {
+      redirect("/api/auth/signin?callbackUrl=/dashboard")
+    },
+  })
 
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push("/login")
-    }
-  }, [user, loading, router])
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[80vh]">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-      </div>
-    )
+  if (status === "loading") {
+    return <div>Loading...</div>
   }
 
-  if (!user) return null
+  const user = session?.user
 
   return (
-    <div className="container mx-auto px-4 py-8">{user.role === "admin" ? <DashboardAdmin /> : <DashboardAgent />}</div>
+    <div className="container mx-auto py-6">
+      {/* Add Agent Code Display */}
+      <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+        <h2 className="text-lg font-semibold text-blue-800 mb-2">Your Agent Code</h2>
+        <div className="text-2xl font-bold text-blue-900 font-mono">
+          {user?.agent_code || user?.id?.substring(0, 6).toUpperCase() || "LOADING..."}
+        </div>
+        <p className="text-sm text-blue-600 mt-1">Use this code when placing orders or for customer reference</p>
+      </div>
+
+      {/* Rest of the existing dashboard content */}
+      <h1 className="text-2xl font-bold mb-4">Dashboard</h1>
+      <p>Welcome, {user?.name}!</p>
+      <p>Email: {user?.email}</p>
+    </div>
   )
 }
