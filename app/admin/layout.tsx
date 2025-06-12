@@ -1,9 +1,8 @@
-// Simplify the admin layout to allow direct access
 "use client"
 
 import type React from "react"
-
 import { AdminSidebar } from "@/components/admin-sidebar"
+import { SidebarProvider } from "@/components/ui/sidebar"
 
 export default function AdminLayout({
   children,
@@ -11,9 +10,11 @@ export default function AdminLayout({
   children: React.ReactNode
 }) {
   return (
-    <div className="flex h-screen bg-gray-100">
-      <AdminSidebar />
-      <main className="flex-1 overflow-y-auto">{children}</main>
-    </div>
+    <SidebarProvider>
+      <div className="flex h-screen bg-gray-100">
+        <AdminSidebar />
+        <main className="flex-1 overflow-y-auto p-6">{children}</main>
+      </div>
+    </SidebarProvider>
   )
 }

@@ -2,7 +2,6 @@
 
 import { usePathname } from "next/navigation"
 import Link from "next/link"
-import { useAuth } from "@/lib/auth-context"
 import { LayoutDashboard, Package, Users, Settings, LogOut, BarChart } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -15,12 +14,18 @@ import {
   SidebarMenuButton,
 } from "@/components/ui/sidebar"
 
-export default function AdminSidebar() {
+export function AdminSidebar() {
   const pathname = usePathname()
-  const { logout } = useAuth()
 
   const isActive = (path: string) => {
     return pathname === path || pathname?.startsWith(`${path}/`)
+  }
+
+  const handleLogout = () => {
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("user")
+      window.location.href = "/"
+    }
   }
 
   return (
@@ -75,7 +80,7 @@ export default function AdminSidebar() {
         </SidebarMenu>
       </SidebarContent>
       <SidebarFooter>
-        <Button variant="ghost" className="w-full justify-start" onClick={logout}>
+        <Button variant="ghost" className="w-full justify-start" onClick={handleLogout}>
           <LogOut className="mr-2 h-4 w-4" />
           <span>Logout</span>
         </Button>
@@ -83,3 +88,6 @@ export default function AdminSidebar() {
     </Sidebar>
   )
 }
+
+// Default export for compatibility
+export default AdminSidebar
