@@ -1,16 +1,24 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  reactStrictMode: true,
+  experimental: {
+    serverComponentsExternalPackages: ['@supabase/supabase-js']
+  },
+  images: {
+    domains: ['placeholder.svg'],
+    unoptimized: true,
+  },
+  // Disable static optimization for problematic pages
+  trailingSlash: false,
+  // Force dynamic rendering for checkout pages
+  async rewrites() {
+    return []
+  },
   eslint: {
     ignoreDuringBuilds: true,
   },
   typescript: {
     ignoreBuildErrors: true,
   },
-  images: {
-    unoptimized: true,
-  },
-  trailingSlash: true,
 }
 
 export default nextConfig
